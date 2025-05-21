@@ -14,9 +14,9 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
   let scale = 1;
   let translateX = 0;
   let translateY = 0;
-  const paletteStrokeWidth = 2;
-  const symbolStrokeColor = 'hsl(var(--foreground))'; // Dark color for symbol strokes
-  const symbolFillColor = 'hsl(var(--foreground))';   // Dark color for symbol text like 'M'
+  const paletteStrokeWidth = 1.5; // Adjusted for better visual on white
+  const symbolStrokeColor = '#333333'; // Hardcoded dark gray for symbol strokes
+  const symbolFillColor = '#333333';   // Hardcoded dark gray for symbol text like 'M'
 
   // Simplified rendering for palette icons, focusing on recognizability
   switch (type) {
@@ -77,7 +77,7 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
   }
 
   return (
-    <svg width="48" height="48" viewBox={viewBox} className="mb-1 bg-card rounded p-1"> {/* Added bg-card, rounded and p-1 for slight padding */}
+    <svg width="48" height="48" viewBox={viewBox} className="mb-1 bg-white rounded p-1"> {/* Changed bg-card to bg-white */}
       <g transform={`scale(${scale}) translate(${translateX}, ${translateY})`}>
         {iconContent}
       </g>
