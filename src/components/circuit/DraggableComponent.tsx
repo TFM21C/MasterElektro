@@ -1,4 +1,5 @@
-import type React from 'react';
+
+import React from 'react';
 import { COMPONENT_DEFINITIONS } from '@/config/component-definitions';
 import type { ElectricalComponent, Point } from '@/types/circuit';
 
@@ -38,16 +39,23 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
     }
   };
 
+  const scale = component.scale || 1;
+
   return (
     <g
-      transform={`translate(${component.x}, ${component.y})`}
+      transform={`translate(${component.x}, ${component.y}) scale(${scale})`}
       onMouseDown={handleComponentMouseDown}
       onClick={handleComponentClick}
       onDoubleClick={handleComponentDoubleClick}
       style={{ cursor: 'grab' }}
       data-testid={`component-${component.id}`}
     >
+      {/* The definition.render function draws the component at its base size.
+          The scale transform applied to this <g> element handles the visual scaling. */}
       {definition.render(component.label, component.state, component.displayPinLabels)}
+      
+      {/* Pin circles are also drawn within this scaled group.
+          Their cx/cy are relative to the unscaled component origin. */}
       {Object.entries(definition.pins).map(([pinName, pinDef]) => {
         const isSelectedPin = connectingPin?.componentId === component.id && connectingPin?.pinName === pinName;
         return (
@@ -55,13 +63,16 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
             key={pinName}
             cx={pinDef.x}
             cy={pinDef.y}
-            r={6} // Slightly larger pin click area
+            r={6 / scale} // Adjust pin radius inversely to scale to maintain apparent size
             fill={isSelectedPin ? 'hsl(var(--ring))' : 'hsl(var(--primary))'}
             opacity={0.6}
             className="pin-circle"
             onMouseDown={(e) => {
               e.stopPropagation();
-              onPinClick(component.id, pinName, { x: component.x + pinDef.x, y: component.y + pinDef.y });
+              // Calculate absolute pin coordinates considering the component's position and scale
+              const absolutePinX = component.x + pinDef.x * scale;
+              const absolutePinY = component.y + pinDef.y * scale;
+              onPinClick(component.id, pinName, { x: absolutePinX, y: absolutePinY });
             }}
             style={{ cursor: 'pointer' }}
             data-testid={`pin-${component.id}-${pinName}`}

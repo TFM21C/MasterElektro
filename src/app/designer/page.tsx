@@ -63,7 +63,14 @@ const DesignerPageContent: React.FC = () => {
     if (!definition || !definition.pins[pinName]) return null;
 
     const pinDef = definition.pins[pinName];
-    return { x: component.x + pinDef.x, y: component.y + pinDef.y };
+    const scale = component.scale || 1;
+    
+    // Pin coordinates are relative to the component's unscaled dimensions.
+    // They need to be scaled according to the component's current scale.
+    return { 
+      x: component.x + pinDef.x * scale, 
+      y: component.y + pinDef.y * scale 
+    };
   }, [components]);
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -76,6 +83,8 @@ const DesignerPageContent: React.FC = () => {
         svgPoint.x = e.clientX;
         svgPoint.y = e.clientY;
         const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
+        // Offset needs to consider the component's current position only,
+        // as scaling is applied at the component's origin.
         setOffset({
           x: pointInSvg.x - component.x,
           y: pointInSvg.y - component.y,
@@ -247,6 +256,9 @@ const DesignerPageContent: React.FC = () => {
       label: newLabel,
       state: definition?.initialState ? { ...definition.initialState } : undefined,
       displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
+      scale: 1.0, // Initialize scale to 1.0
+      width: null, // Initialize width to null
+      height: null, // Initialize height to null
     };
     setComponents(prev => [...prev, newComponent]);
     setComponentToEdit(newComponent); 
@@ -297,7 +309,7 @@ const DesignerPageContent: React.FC = () => {
         onAddComponent={addComponent}
         isOpen={isPaletteOpen}
         onToggle={() => setIsPaletteOpen(!isPaletteOpen)}
-        paletteComponents={filteredPaletteComponents} // Pass filtered components
+        paletteComponents={filteredPaletteComponents} 
       />
 
       <div ref={canvasContainerRef} className="flex-1 flex flex-col items-stretch p-0 rounded-lg shadow-md bg-card min-w-0">
@@ -331,7 +343,7 @@ const DesignerPageContent: React.FC = () => {
             currentMouseSvgCoords={currentMouseSvgCoords}
             getAbsolutePinCoordinates={getAbsolutePinCoordinates}
             onMouseDownComponent={handleMouseDownComponent}
-            onPinClick={handlePinClick}
+            onPinClick={onPinClick}
             onComponentClick={handleComponentClick}
             onConnectionContextMenu={handleConnectionContextMenu}
             width={canvasDimensions.width}

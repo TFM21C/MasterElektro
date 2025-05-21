@@ -1,4 +1,6 @@
+
 import type { PaletteComponentFirebaseData } from '@/types/circuit';
+import { COMPONENT_DEFINITIONS } from './component-definitions';
 
 export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
   {
@@ -12,6 +14,8 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     hasToggleState: false,
     hasEditablePins: false,
     initialPinLabels: { 'out': '' },
+    resizable: false,
+    defaultSize: { width: COMPONENT_DEFINITIONS['24V'].width, height: COMPONENT_DEFINITIONS['24V'].height },
   },
   {
     id: 'masse_0v',
@@ -24,6 +28,8 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     hasToggleState: false,
     hasEditablePins: false,
     initialPinLabels: { 'in': '' },
+    resizable: false,
+    defaultSize: { width: COMPONENT_DEFINITIONS['0V'].width, height: COMPONENT_DEFINITIONS['0V'].height },
   },
   {
     id: 'taster_schliesser',
@@ -36,6 +42,11 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     hasToggleState: true,
     hasEditablePins: true,
     initialPinLabels: { '13': '13', '14': '14' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Schließer'].width, height: COMPONENT_DEFINITIONS['Schließer'].height },
+    minScale: 0.5,
+    maxScale: 2.0,
+    scaleStep: 0.1,
   },
   {
     id: 'taster_oeffner',
@@ -48,19 +59,29 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     hasToggleState: true,
     hasEditablePins: true,
     initialPinLabels: { '11': '11', '12': '12' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Öffner'].width, height: COMPONENT_DEFINITIONS['Öffner'].height },
+    minScale: 0.5,
+    maxScale: 2.0,
+    scaleStep: 0.1,
   },
   {
     id: 'not_aus_taster',
     name: 'Not-Aus-Taster',
-    type: 'Öffner', // Uses Öffner rendering logic on canvas
-    paletteIconType: 'NotAusTaster', // Specific icon for palette
+    type: 'Öffner', 
+    paletteIconType: 'NotAusTaster', 
     abbreviation: 'S',
     defaultLabelPrefix: 'SQ',
     category: 'Befehlsgeräte',
     description: 'Sicherheitsrelevanter Öffner mit mechanischer Verriegelung. Zur Notabschaltung.',
-    hasToggleState: true, // Typically latching, but can be simplified for now
+    hasToggleState: true, 
     hasEditablePins: true,
     initialPinLabels: { '11': '11', '12': '12' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Öffner'].width, height: COMPONENT_DEFINITIONS['Öffner'].height }, // Uses Öffner's base size
+    minScale: 0.8, // Not-Aus usually not scaled much
+    maxScale: 1.5,
+    scaleStep: 0.1,
   },
   {
     id: 'schuetzspule',
@@ -73,6 +94,11 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     hasToggleState: false,
     hasEditablePins: true,
     initialPinLabels: { 'A1': 'A1', 'A2': 'A2' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['SchuetzSpule'].width, height: COMPONENT_DEFINITIONS['SchuetzSpule'].height },
+    minScale: 0.7,
+    maxScale: 1.8,
+    scaleStep: 0.1,
   },
   {
     id: 'zeitrelais_ein',
@@ -82,22 +108,31 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     defaultLabelPrefix: 'KT',
     category: 'Speichernde / Verarbeitende',
     description: 'Kontakt schließt/öffnet nach einer einstellbaren Verzögerungszeit.',
-    hasToggleState: false, // The coil itself doesn't toggle, its contacts do (not modeled yet)
-    hasEditablePins: true, // A1/A2 for coil, T for time setting
+    hasToggleState: false, 
+    hasEditablePins: true, 
     initialPinLabels: { 'A1': 'A1', 'A2': 'A2', 'T': '5s' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['ZeitRelaisEin'].width, height: COMPONENT_DEFINITIONS['ZeitRelaisEin'].height },
+    minScale: 0.7,
+    maxScale: 1.8,
+    scaleStep: 0.1,
   },
   {
-    id: 'motor_steuerung', // Changed id to avoid conflict if 'Motor' is also for power
+    id: 'motor_steuerung', 
     name: 'Motor (Steuerstrom)',
-    type: 'Motor', // Could be a smaller representation or a generic coil if only for control circuit
+    type: 'Motor', 
     abbreviation: 'M',
     defaultLabelPrefix: 'M',
     category: 'Stellglieder',
     description: 'Stellglied, das einen Motor im Hauptstromkreis repräsentiert.',
     hasToggleState: false,
     hasEditablePins: true,
-    // For control circuit, typically A1/A2 for the contactor coil that controls the motor
     initialPinLabels: { 'A1': 'A1', 'A2': 'A2' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Motor'].width, height: COMPONENT_DEFINITIONS['Motor'].height },
+    minScale: 0.5,
+    maxScale: 2.5,
+    scaleStep: 0.1,
   },
   {
     id: 'lampe',
@@ -110,10 +145,16 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     hasToggleState: false,
     hasEditablePins: true,
     initialPinLabels: { 'X1': 'X1', 'X2': 'X2' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Lampe'].width, height: COMPONENT_DEFINITIONS['Lampe'].height },
+    minScale: 0.5,
+    maxScale: 2.0,
+    scaleStep: 0.1,
   },
 ];
 
 // Helper to find a palette component by its firebase ID
-export const getPaletteComponentById = (id: string): PaletteComponentFirebaseData | undefined => {
+export const getPaletteComponentById = (id: string | undefined): PaletteComponentFirebaseData | undefined => {
+  if (!id) return undefined;
   return MOCK_PALETTE_COMPONENTS.find(p => p.id === id);
 };
