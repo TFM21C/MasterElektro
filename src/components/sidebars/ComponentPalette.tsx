@@ -11,7 +11,7 @@ interface ComponentPaletteProps {
   isOpen: boolean;
   onToggle: () => void;
   paletteComponents: PaletteComponentFirebaseData[];
-  isSimulating?: boolean; // Added to prevent adding components during simulation
+  isSimulating?: boolean;
 }
 
 const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isOpen, onToggle, paletteComponents, isSimulating }) => {
@@ -46,42 +46,39 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
         )}
       </Button>
       
-      <ScrollArea className="flex-grow w-full">
-        <div 
-          className={`transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-          style={{ 
-            maxHeight: isOpen ? '10000px' : '0px', // Use a large fixed maxHeight when open, 0px when closed
-            overflow: 'hidden' // Ensure content is clipped during animation
-          }}
-        >
-          {/* Content is ALWAYS rendered, visibility controlled by parent div's maxHeight and opacity */}
-          {categories.map(category => (
-            <div key={category} className="mb-4">
-              <h3 className="text-md font-semibold bg-gray-900 text-white mb-2 p-2 rounded-md text-center sticky top-0 z-10">
-                {category}
-              </h3>
-              <div className="space-y-2 w-full">
-                {groupedComponents[category].map(componentData => (
-                  <Button
-                    key={componentData.id}
-                    onClick={() => onAddComponent(componentData)}
-                    variant="outline" 
-                    className="w-full h-auto p-2 bg-card hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border-border text-left"
-                    disabled={isSimulating} // Disable adding components during simulation
-                  >
-                    <div className="bg-white p-1 rounded mb-1.5 inline-block">
-                      <PaletteIcon type={componentData.paletteIconType || componentData.type} />
-                    </div>
-                    <span className="px-2 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block leading-snug max-w-full break-words">
-                      {componentData.name}
-                    </span>
-                  </Button>
-                ))}
-              </div>
+      {isOpen && (
+        <div className="flex-grow w-full overflow-hidden animate-in fade-in-0 duration-300">
+          <ScrollArea className="h-full w-full">
+            <div> {/* Wrapper for all categories to be the direct child of ScrollArea's viewport */}
+              {categories.map(category => (
+                <div key={category} className="mb-4">
+                  <h3 className="text-md font-semibold bg-gray-900 text-white mb-2 p-2 rounded-md text-center sticky top-0 z-10">
+                    {category}
+                  </h3>
+                  <div className="space-y-2 w-full">
+                    {groupedComponents[category].map(componentData => (
+                      <Button
+                        key={componentData.id}
+                        onClick={() => onAddComponent(componentData)}
+                        variant="outline" 
+                        className="w-full h-auto p-2 bg-card hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border-border text-left"
+                        disabled={isSimulating}
+                      >
+                        <div className="bg-white p-1 rounded mb-1.5 inline-block">
+                          <PaletteIcon type={componentData.paletteIconType || componentData.type} />
+                        </div>
+                        <span className="px-2 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block leading-snug max-w-full break-words">
+                          {componentData.name}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </ScrollArea>
         </div>
-      </ScrollArea>
+      )}
     </div>
   );
 };
