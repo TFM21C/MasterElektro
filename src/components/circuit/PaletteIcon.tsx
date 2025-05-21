@@ -27,9 +27,9 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       viewBox = '0 0 40 40';
-      scale = 0.8;
-      translateX = (40 - definition.width * scale) / (2 * scale);
-      translateY = (40 - definition.height * scale) / (2 * scale);
+      scale = 1.1; // Adjusted scale
+      translateX = (48 - 40 * scale) / (2 * scale); // Recalculated for 48px container
+      translateY = (48 - 40 * scale) / (2 * scale); // Recalculated for 48px container
       break;
     case 'Öffner':
       iconContent = (
@@ -41,9 +41,9 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       viewBox = '0 0 40 40';
-      scale = 0.8;
-      translateX = (40 - definition.width * scale) / (2 * scale);
-      translateY = (40 - definition.height * scale) / (2 * scale);
+      scale = 1.1; // Adjusted scale
+      translateX = (48 - 40 * scale) / (2 * scale); // Recalculated for 48px container
+      translateY = (48 - 40 * scale) / (2 * scale); // Recalculated for 48px container
       break;
     case 'Motor':
       iconContent = (
@@ -53,9 +53,9 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       viewBox = '0 0 80 80';
-      scale = 0.45;
-       translateX = (40 - definition.width * scale) / (2 * scale);
-      translateY = (40 - definition.height * scale) / (2 * scale);
+      scale = 0.55; // Adjusted scale
+      translateX = (48 - 80 * scale) / (2 * scale); // Recalculated for 48px container
+      translateY = (48 - 80 * scale) / (2 * scale); // Recalculated for 48px container
       break;
     case 'Lampe':
       iconContent = (
@@ -66,16 +66,16 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       viewBox = '0 0 60 60';
-      scale = 0.6;
-      translateX = (40 - definition.width * scale) / (2 * scale);
-      translateY = (40 - definition.height * scale) / (2 * scale);
+      scale = 0.73; // Adjusted scale
+      translateX = (48 - 60 * scale) / (2 * scale); // Recalculated for 48px container
+      translateY = (48 - 60 * scale) / (2 * scale); // Recalculated for 48px container
       break;
     default:
       return null; // Or a placeholder
   }
 
   return (
-    <svg width="32" height="32" viewBox={viewBox} className="mb-1 text-primary-foreground group-hover:text-accent-foreground">
+    <svg width="48" height="48" viewBox={viewBox} className="mb-1 text-primary-foreground group-hover:text-accent-foreground"> {/* Increased size */}
       <g transform={`scale(${scale}) translate(${translateX}, ${translateY})`}>
         {iconContent}
       </g>
