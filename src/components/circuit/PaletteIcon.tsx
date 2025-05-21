@@ -9,16 +9,30 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
   const viewBox = "0 0 40 40";
   const paletteStrokeWidth = 2; 
   const symbolStrokeColor = "black";
-  const symbolFillColor = "white";
+  const symbolFillColor = "white"; // Used for fills like the Motor circle background
 
   switch (type) {
+    case '24V':
+      iconContent = (
+        <>
+          <line x1="5" y1="25" x2="35" y2="25" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <text x="20" y="18" fontSize="18" textAnchor="middle" fill={symbolStrokeColor} fontWeight="bold">+</text>
+        </>
+      );
+      break;
+    case '0V':
+      iconContent = (
+        <>
+          <line x1="5" y1="15" x2="35" y2="15" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <text x="20" y="30" fontSize="12" textAnchor="middle" fill={symbolStrokeColor} fontWeight="bold">0V</text>
+        </>
+      );
+      break;
     case 'Schließer':
       iconContent = (
         <>
-          {/* Fixed contact lines, almost full height */}
           <line x1="20" y1="2" x2="20" y2="17.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
           <line x1="20" y1="22.5" x2="20" y2="38" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          {/* Diagonal line for normally open contact, wider span */}
           <line x1="10" y1="17.5" x2="20" y2="22.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
       );
@@ -26,12 +40,9 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
     case 'Öffner':
       iconContent = (
         <>
-          {/* Fixed contact lines, almost full height */}
           <line x1="20" y1="2" x2="20" y2="17.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
           <line x1="20" y1="22.5" x2="20" y2="38" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          {/* "Nose" - horizontal line for normally closed contact, wider span */}
           <line x1="20" y1="17.5" x2="30" y2="17.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          {/* Diagonal line for normally closed contact */}
           <line x1="30" y1="17.5" x2="20" y2="22.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
       );

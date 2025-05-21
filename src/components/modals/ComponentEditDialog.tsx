@@ -20,6 +20,18 @@ interface ComponentEditDialogProps {
   onSave: (id: string, newLabel: string, newPinLabels: Record<string, string>) => void;
 }
 
+const getComponentDisplayName = (type: string): string => {
+  const nameMap: Record<string, string> = {
+    'Schließer': 'Schalter',
+    'Öffner': 'Schalter',
+    'Motor': 'Motor',
+    'Lampe': 'Lampe',
+    '24V': '24V Quelle',
+    '0V': '0V Quelle',
+  };
+  return nameMap[type] || type; // Fallback to the technical type name
+};
+
 const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, isOpen, onClose, onSave }) => {
   const [currentLabel, setCurrentLabel] = useState(component.label);
   const [currentPinLabels, setCurrentPinLabels] = useState(
@@ -50,7 +62,7 @@ const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, is
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Komponente bearbeiten</DialogTitle>
+          <DialogTitle>{`${getComponentDisplayName(component.type)} bearbeiten`}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">

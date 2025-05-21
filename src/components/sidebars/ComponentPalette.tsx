@@ -10,8 +10,10 @@ interface ComponentPaletteProps {
   onToggle: () => void;
 }
 
-const componentTypes = ['Schließer', 'Öffner', 'Motor', 'Lampe'];
+const componentTypes = ['24V', '0V', 'Schließer', 'Öffner', 'Motor', 'Lampe'];
 const componentLabels: Record<string, string> = {
+  '24V': '24V Quelle',
+  '0V': '0V Quelle',
   'Schließer': 'Schalter NO',
   'Öffner': 'Schalter NC',
   'Motor': 'Motor',
@@ -45,12 +47,12 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
             <Button
               key={type}
               onClick={() => onAddComponent(type)}
-              variant="outline" // Changed variant for a base style
+              variant="outline" 
               className="w-full h-24 p-2 bg-card hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border-border"
             >
               <PaletteIcon type={type} />
               {isOpen && (
-                <span className="mt-1.5 px-3 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block">
+                <span className="mt-1.5 px-3 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block leading-snug">
                   {componentLabels[type]}
                 </span>
               )}
