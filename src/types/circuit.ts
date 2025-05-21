@@ -17,59 +17,76 @@ export interface ComponentDefinition {
   render: (
     label: string,
     state?: ComponentState,
-    displayPinLabels?: Record<string, string>
+    displayPinLabels?: Record<string, string>,
+    simulatedState?: SimulatedComponentState, // Added for simulation
+    componentId?: string // Added for simulation, if needed by render
   ) => JSX.Element;
   pins: Record<string, PinDefinition>;
   initialState?: ComponentState;
   initialDisplayPinLabels?: Record<string, string>;
 }
 
-// New type for data structure mimicking Firebase paletteComponents
+export interface PaletteComponentSimulationConfig {
+  interactable: boolean;
+  controlLogic: 'toggle_on_press' | 'toggle_on_click' | 'energize_coil' | 'visualize_energized' | 'timer_on_delay' | 'timer_off_delay' | 'pass_through' | 'fixed_open' | 'fixed_closed';
+  controlledBy?: 'user' | 'voltage' | 'label_match';
+  initialContactState?: { [pinId: string]: 'open' | 'closed' };
+  affectingLabel?: boolean; // For coils, true if they affect contacts with the same label
+  energizePins?: string[]; // Pins that need voltage to energize the component
+  outputPinStateOnEnergized?: { [pinId: string]: 'open' | 'closed' }; // For contacts/switches
+  outputPinStateOnDeEnergized?: { [pinId: string]: 'open' | 'closed' }; // For contacts/switches
+  timerDurationMs?: number; // For timer relays
+  timerPin?: string; // Pin holding the timer value if applicable
+}
+
 export interface PaletteComponentFirebaseData {
-  id: string; 
-  name: string; 
-  type: string; 
-  abbreviation: string; 
-  defaultLabelPrefix: string; 
-  category: string; 
-  description: string; 
-  hasToggleState: boolean; 
-  hasEditablePins: boolean; 
-  initialPinLabels: Record<string, string>; 
+  id: string;
+  name: string;
+  type: string;
+  abbreviation: string;
+  defaultLabelPrefix: string;
+  category: string;
+  description: string;
+  hasToggleState: boolean; // Consider removing if covered by simulation config
+  hasEditablePins: boolean;
+  initialPinLabels: Record<string, string>;
   paletteIconType?: string;
 
-  // New fields for resizing
   resizable?: boolean;
   defaultSize?: { width: number; height: number };
   minScale?: number;
   maxScale?: number;
   scaleStep?: number;
+
+  simulation?: PaletteComponentSimulationConfig; // Added for simulation
 }
 
 export interface ElectricalComponent {
-  id: string; 
-  type: string; 
-  firebaseComponentId: string; 
+  id: string;
+  type: string;
+  firebaseComponentId: string; // ID from PaletteComponentFirebaseData
   x: number;
   y: number;
   label: string;
-  state?: ComponentState;
-  displayPinLabels?: Record<string, string>; 
+  state?: ComponentState; // Base state
+  displayPinLabels?: Record<string, string>;
 
-  // New fields for resizing
-  scale?: number; // Scaling factor, e.g., 1.0 for original, 1.2 for 120%
-  width?: number | null; // Optional explicit width, overrides scale for width if set
-  height?: number | null; // Optional explicit height, overrides scale for height if set
+  scale?: number;
+  width?: number | null;
+  height?: number | null;
 }
 
 export type Point = { x: number; y: number };
 
 export interface Connection {
-  id: string;
+  id:string;
   startComponentId: string;
   startPinName: string;
   endComponentId: string;
   endPinName: string;
+  color?: string; // For Installationsschaltplan
+  numberOfWires?: number; // For Installationsschaltplan
+  waypoints?: Point[]; // For Installationsschaltplan
 }
 
 export const ProjectTypes = [
@@ -78,6 +95,7 @@ export const ProjectTypes = [
   "Übersichtsschaltplan",
   "Stromlaufplan in zusammenhängender Darstellung",
   "Stromlaufplan in aufgelöster Darstellung",
+  "Installationsschaltplan", // Added new project type
 ] as const;
 
 export type ProjectType = (typeof ProjectTypes)[number];
@@ -91,4 +109,19 @@ export interface ProjectData {
   lastModified: Date;
   components: ElectricalComponent[];
   connections: Connection[];
+  isSimulating?: boolean; // Added for simulation state persistence
+}
+
+// Simulation-specific states (managed in frontend, not directly in ProjectData for Firebase in this iteration)
+export interface SimulatedComponentState {
+  isEnergized?: boolean;
+  currentContactState?: { [pinName: string]: 'open' | 'closed' };
+  timerRemaining?: number | null;
+  timerActive?: boolean;
+  isLocked?: boolean; // e.g. for Not-Aus
+  // Any other dynamic state during simulation
+}
+
+export interface SimulatedConnectionState {
+  isConducting: boolean;
 }

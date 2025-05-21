@@ -1,3 +1,4 @@
+
 import type React from 'react';
 
 interface PaletteIconProps {
@@ -9,7 +10,7 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
   const viewBox = "0 0 40 40";
   const paletteStrokeWidth = 3; // Increased for better visibility
   const symbolStrokeColor = "black";
-  const symbolFillColor = "white"; 
+  const symbolFillColor = "white";
 
   switch (type) {
     case '24V':
@@ -28,7 +29,7 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
-    case 'Schließer': // Normally Open (NO)
+    case 'Schließer':
       iconContent = (
         <>
           <line x1="20" y1="2" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
@@ -37,7 +38,7 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
-    case 'Öffner': // Normally Closed (NC)
+    case 'Öffner':
       iconContent = (
         <>
           <line x1="20" y1="2" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
@@ -47,11 +48,11 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
-    case 'NotAusTaster': // Specific icon for Not-Aus in palette
-      iconContent = ( // Example: Öffner with a red circle around it or filled red
+    case 'NotAusTaster':
+      iconContent = (
         <>
           <circle cx="20" cy="20" r="19" fill="hsl(var(--destructive))" stroke="black" strokeWidth="1"/>
-          <g transform="scale(0.7) translate(8.5, 8.5)"> {/* Scale down the Öffner symbol */}
+          <g transform="scale(0.7) translate(8.5, 8.5)">
             <line x1="20" y1="2" x2="20" y2="18" stroke={symbolFillColor} strokeWidth={paletteStrokeWidth} />
             <line x1="20" y1="22" x2="20" y2="38" stroke={symbolFillColor} strokeWidth={paletteStrokeWidth} />
             <line x1="20" y1="18" x2="28" y2="18" stroke={symbolFillColor} strokeWidth={paletteStrokeWidth} />
@@ -62,13 +63,13 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
       break;
     case 'Motor':
       iconContent = (
-        <circle cx="20" cy="20" r="16" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+        <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
       );
       break;
     case 'Lampe':
       iconContent = (
         <>
-          <circle cx="20" cy="20" r="16" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
           <line x1="10" y1="10" x2="30" y2="30" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
           <line x1="10" y1="30" x2="30" y2="10" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
@@ -79,7 +80,7 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         <rect x="8" y="12" width="24" height="16" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
       );
       break;
-    case 'ZeitRelaisEin': // Simple box with a 'T'
+    case 'ZeitRelaisEin':
       iconContent = (
         <>
           <rect x="8" y="8" width="24" height="24" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
@@ -87,12 +88,37 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
+    // Installation specific icons
+    case 'Abzweigdose':
+      iconContent = (
+        <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+      );
+      break;
+    case 'SchliesserInstallation':
+      iconContent = (
+        <>
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          {/* Simplified NO contact symbol inside */}
+          <line x1="20" y1="8" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="20" y1="22" x2="20" y2="32" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="15" y1="18" x2="20" y2="22" stroke={symbolStrokeColor} strokeWidth="2" />
+        </>
+      );
+      break;
+    case 'LampeInstallation':
+       iconContent = (
+        <>
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <line x1="10" y1="10" x2="30" y2="30" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <line x1="10" y1="30" x2="30" y2="10" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+        </>
+      );
+      break;
     default:
-      // Placeholder for unknown types
       iconContent = (
         <rect x="5" y="5" width="30" height="30" stroke="grey" strokeWidth="1" fill="lightgrey" />
       );
-      return null; 
+      return null;
   }
 
   return (

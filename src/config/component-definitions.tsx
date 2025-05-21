@@ -1,5 +1,6 @@
+
 // Using .tsx because it contains JSX in render functions
-import type { ComponentDefinition } from '@/types/circuit';
+import type { ComponentDefinition, SimulatedComponentState } from '@/types/circuit';
 
 export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
   '24V': {
@@ -28,80 +29,84 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       'in': { x: 100, y: 10, label: '' }
     }
   },
-  'Schließer': { 
-    width: 80, 
-    height: 60, 
-    render: (label, state, displayPinLabels = { '13': '13', '14': '14' }) => (
-      <>
-        <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
-        <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
-        {state?.isOpen ? (
-          <line x1="15" y1="22.5" x2="25" y2="37.5" className="line" /> 
-        ) : (
-          <line x1="25" y1="22.5" x2="25" y2="37.5" className="line" />
-        )}
-        <text x="15" y="18" className="text-pin">{displayPinLabels['13']}</text>
-        <text x="15" y="48" className="text-pin">{displayPinLabels['14']}</text>
-        <text x="55" y="30" className="component-text">{label}</text>
-      </>
-    ),
+  'Schließer': {
+    width: 80,
+    height: 60,
+    render: (label, _state, displayPinLabels = { '13': '13', '14': '14' }, simulatedState) => {
+        const isClosed = simulatedState?.currentContactState?.['13'] === 'closed' && simulatedState?.currentContactState?.['14'] === 'closed';
+        return (
+            <>
+                <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
+                <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
+                {isClosed ? (
+                    <line x1="25" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2" />
+                ) : (
+                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line" />
+                )}
+                <text x="15" y="18" className="text-pin">{displayPinLabels['13']}</text>
+                <text x="15" y="48" className="text-pin">{displayPinLabels['14']}</text>
+                <text x="55" y="30" className="component-text">{label}</text>
+            </>
+        );
+    },
     pins: {
       '13': { x: 25, y: 0, label: '13' },
       '14': { x: 25, y: 60, label: '14' }
     },
-    initialState: { isOpen: true },
     initialDisplayPinLabels: { '13': '13', '14': '14' }
   },
-  'Öffner': { 
-    width: 80, 
-    height: 60, 
-    render: (label, state, displayPinLabels = { '11': '11', '12': '12' }) => (
-      <>
-        <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
-        <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
-        {state?.isClosed ? (
-          <>
-            <line x1="25" y1="22.5" x2="30" y2="22.5" className="line" /> 
-            <line x1="30" y1="22.5" x2="25" y2="37.5" className="line" /> 
-          </>
-        ) : (
-          <line x1="25" y1="22.5" x2="25" y2="37.5" className="line" />
-        )}
-        <text x="15" y="18" className="text-pin">{displayPinLabels['11']}</text>
-        <text x="15" y="48" className="text-pin">{displayPinLabels['12']}</text>
-        <text x="55" y="30" className="component-text">{label}</text>
-      </>
-    ),
+  'Öffner': {
+    width: 80,
+    height: 60,
+    render: (label, _state, displayPinLabels = { '11': '11', '12': '12' }, simulatedState) => {
+        const isClosed = simulatedState?.currentContactState?.['11'] === 'closed' && simulatedState?.currentContactState?.['12'] === 'closed';
+        return (
+            <>
+                <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
+                <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
+                {isClosed ? (
+                    <>
+                        <line x1="25" y1="22.5" x2="30" y2="22.5" className="line stroke-[hsl(var(--destructive))] stroke-2" />
+                        <line x1="30" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2" />
+                    </>
+                ) : (
+                     <line x1="25" y1="22.5" x2="25" y2="37.5" className="line" /> // Represents open for simulation
+                )}
+                <text x="15" y="18" className="text-pin">{displayPinLabels['11']}</text>
+                <text x="15" y="48" className="text-pin">{displayPinLabels['12']}</text>
+                <text x="55" y="30" className="component-text">{label}</text>
+            </>
+        );
+    },
     pins: {
       '11': { x: 25, y: 0, label: '11' },
       '12': { x: 25, y: 60, label: '12' }
     },
-    initialState: { isClosed: true },
     initialDisplayPinLabels: { '11': '11', '12': '12' }
   },
-  'Motor': { // This is for the main canvas, showing A1/A2 for control
-    width: 100, 
-    height: 100, 
-    render: (label, _state, displayPinLabels = { 'A1': 'A1', 'A2': 'A2' }) => (
+  'Motor': {
+    width: 100,
+    height: 100,
+    render: (label, _state, displayPinLabels = { 'A1': 'A1', 'A2': 'A2' }, simulatedState) => (
       <>
-        <circle cx="50" cy="50" r="37.5" className="symbol" />
-        <text x="50" y="53" fontSize="30px" textAnchor="middle" className="font-bold fill-foreground">M</text>
-        <text x="95" y="50" className="component-text">{label}</text> 
+        <circle cx="50" cy="50" r="37.5" className="symbol" fill={simulatedState?.isEnergized ? 'hsl(var(--primary))' : 'hsl(var(--card))'} />
+        <text x="50" y="53" fontSize="30px" textAnchor="middle" className="font-bold" fill={simulatedState?.isEnergized ? 'hsl(var(--primary-foreground))' : 'hsl(var(--foreground))'}>M</text>
+        <text x="95" y="50" className="component-text">{label}</text>
         <text x="50" y="5" className="text-pin">{displayPinLabels['A1']}</text>
         <text x="50" y="95" className="text-pin">{displayPinLabels['A2']}</text>
       </>
     ),
     pins: {
-      'A1': { x: 50, y: 12.5, label: 'A1' }, 
+      'A1': { x: 50, y: 12.5, label: 'A1' },
       'A2': { x: 50, y: 87.5, label: 'A2' }
     }
   },
   'Lampe': {
-    width: 90,  
-    height: 75, 
-    render: (label, _state, displayPinLabels = { 'X1': 'X1', 'X2': 'X2' }) => (
+    width: 90,
+    height: 75,
+    render: (label, _state, displayPinLabels = { 'X1': 'X1', 'X2': 'X2' }, simulatedState) => (
       <>
-        <circle cx="37.5" cy="37.5" r="25" className="symbol" />
+        <circle cx="37.5" cy="37.5" r="25" className="symbol" fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} />
         <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 - 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 + 25 / Math.sqrt(2)} className="line" />
         <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 + 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 - 25 / Math.sqrt(2)} className="line" />
         <text x="70" y="37.5" className="component-text">{label}</text>
@@ -110,16 +115,16 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       </>
     ),
     pins: {
-      'X1': { x: 37.5, y: 12.5, label: 'X1' }, 
-      'X2': { x: 37.5, y: 62.5, label: 'X2' } 
+      'X1': { x: 37.5, y: 12.5, label: 'X1' },
+      'X2': { x: 37.5, y: 62.5, label: 'X2' }
     }
   },
   'SchuetzSpule': {
     width: 60,
     height: 40,
-    render: (label, _state, displayPinLabels = { 'A1': 'A1', 'A2': 'A2' }) => (
+    render: (label, _state, displayPinLabels = { 'A1': 'A1', 'A2': 'A2' }, simulatedState) => (
       <>
-        <rect x="5" y="5" width="50" height="30" className="symbol" />
+        <rect x="5" y="5" width="50" height="30" className="symbol" fill={simulatedState?.isEnergized ? 'hsl(var(--primary))' : 'hsl(var(--card))'} />
         <text x="30" y="-5" className="text-pin">{displayPinLabels['A1']}</text>
         <text x="30" y="50" className="text-pin">{displayPinLabels['A2']}</text>
         <text x="70" y="20" className="component-text">{label}</text>
@@ -130,15 +135,19 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       'A2': { x: 30, y: 35, label: 'A2' }
     }
   },
-  'ZeitRelaisEin': { // Einschaltverzögert (On-delay timer)
+  'ZeitRelaisEin': {
     width: 70,
     height: 50,
-    render: (label, _state, displayPinLabels = { 'A1': 'A1', 'A2': 'A2', 'T': 'T' }) => (
+    render: (label, _state, displayPinLabels = { 'A1': 'A1', 'A2': 'A2', 'T': 'T' }, simulatedState) => (
       <>
-        <rect x="5" y="5" width="60" height="40" className="symbol" />
-        {/* Small X or clock symbol for timer */}
+        <rect x="5" y="5" width="60" height="40" className="symbol" fill={simulatedState?.isEnergized ? 'hsl(var(--primary))' : 'hsl(var(--card))'} />
         <line x1="15" y1="15" x2="25" y2="25" className="line stroke-muted-foreground" />
         <line x1="15" y1="25" x2="25" y2="15" className="line stroke-muted-foreground" />
+        {simulatedState?.timerActive && (
+            <text x="35" y="25" fontSize="10px" textAnchor="middle" fill="hsl(var(--destructive))">
+                {((simulatedState.timerRemaining || 0) / 1000).toFixed(1)}s
+            </text>
+        )}
         <text x="35" y="-5" className="text-pin">{displayPinLabels['A1']}</text>
         <text x="35" y="55" className="text-pin">{displayPinLabels['A2']}</text>
         <text x="5" y="0" className="text-pin">{displayPinLabels['T']}</text>
@@ -148,7 +157,68 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     pins: {
       'A1': { x: 35, y: 5, label: 'A1' },
       'A2': { x: 35, y: 45, label: 'A2' },
-      'T': {x: 5, y: 25, label: 'T'} // Not a connectable pin, but for displaying time value
+      'T': { x: 5, y: 25, label: 'T' }
+    }
+  },
+  // Installation specific components
+  'Abzweigdose': {
+    width: 50,
+    height: 50,
+    render: (label) => (
+      <>
+        <circle cx="25" cy="25" r="24" className="symbol stroke-2" />
+        <text x="25" y="60" textAnchor="middle" className="component-text text-xs">{label}</text>
+      </>
+    ),
+    pins: {
+      'N': { x: 25, y: 1, label: 'N' },  // North
+      'E': { x: 49, y: 25, label: 'E' },  // East
+      'S': { x: 25, y: 49, label: 'S' },  // South
+      'W': { x: 1, y: 25, label: 'W' },   // West
+    }
+  },
+  'SchliesserInstallation': {
+    width: 30,
+    height: 30,
+    render: (label, _state, displayPinLabels = { 'L': 'L', 'Out': '' }, simulatedState) => {
+      const isClosed = simulatedState?.currentContactState?.L === 'closed'; // Assuming L is input and controls output
+      return (
+        <>
+          <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
+          {/* Simplified NO contact symbol inside circle */}
+          <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          {isClosed ? (
+             <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5"/>
+          ) : (
+             <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5"/>
+          )}
+          <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
+           {/* Pin labels can be omitted for small symbols or placed outside if needed */}
+        </>
+      );
+    },
+    pins: {
+      // Pins typically at edges or center for connection routing
+      'L': { x: 15, y: 1, label: 'L' },
+      'Out': { x: 15, y: 29, label: 'Out' }
+    }
+  },
+  'LampeInstallation': {
+    width: 30,
+    height: 30,
+    render: (label, _state, _displayPinLabels, simulatedState) => (
+      <>
+        <circle cx="15" cy="15" r="14" className="symbol stroke-2" fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} />
+        {/* X inside circle */}
+        <line x1="8" y1="8" x2="22" y2="22" className="line" strokeWidth="1.5" />
+        <line x1="8" y1="22" x2="22" y2="8" className="line" strokeWidth="1.5" />
+        <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
+      </>
+    ),
+    pins: {
+      'L': { x: 15, y: 1, label: 'L' },
+      'N': { x: 15, y: 29, label: 'N' }
     }
   },
 };
