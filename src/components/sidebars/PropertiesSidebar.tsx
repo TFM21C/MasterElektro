@@ -1,14 +1,14 @@
 
-import React from 'react'; 
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, RotateCcw, AlertTriangle } from "lucide-react"; 
+import { X, RotateCcw, AlertTriangle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { ElectricalComponent, PaletteComponentFirebaseData, Connection } from '@/types/circuit';
-import { COMPONENT_DEFINITIONS } from '@/config/component-definitions'; // Import definitions
+import type { ElectricalComponent, PaletteComponentFirebaseData, Connection, ProjectType } from '@/types/circuit';
+import { COMPONENT_DEFINITIONS } from '@/config/component-definitions';
 
 interface PropertiesSidebarProps {
   component: ElectricalComponent | null;
@@ -21,21 +21,25 @@ interface PropertiesSidebarProps {
   onDeleteComponent: (id: string) => void;
   onDeleteConnection: (connectionId: string) => void;
   onUpdateConnectionEndpoint: (connectionId: string, newEndComponentId: string, newEndPinName: string) => void;
+  onUpdateConnection: (connectionId: string, updates: Partial<Connection>) => void;
   isSimulating?: boolean;
+  projectType?: ProjectType | null;
 }
 
-const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ 
-  component, 
-  paletteComponent, 
+const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
+  component,
+  paletteComponent,
   connection,
   allComponents,
   connections,
-  onClose, 
-  onUpdateComponent, 
+  onClose,
+  onUpdateComponent,
   onDeleteComponent,
   onDeleteConnection,
   onUpdateConnectionEndpoint,
-  isSimulating
+  onUpdateConnection,
+  isSimulating,
+  projectType
 }) => {
 
   const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +57,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
       onUpdateComponent(component.id, { displayPinLabels: newPinLabels });
     }
   };
-  
+
   const handleScaleChange = (newScale: number[]) => {
     if (component) {
       onUpdateComponent(component.id, { scale: newScale[0] });
@@ -63,14 +67,14 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   const handleScaleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (component && paletteComponent) {
       let newScale = parseFloat(e.target.value);
-      if (isNaN(newScale)) newScale = 1.0; 
-      
+      if (isNaN(newScale)) newScale = 1.0;
+
       const minScale = paletteComponent.minScale || 0.1;
       const maxScale = paletteComponent.maxScale || 5.0;
 
       if (newScale < minScale) newScale = minScale;
       if (newScale > maxScale) newScale = maxScale;
-      
+
       onUpdateComponent(component.id, { scale: newScale });
     }
   };
@@ -83,16 +87,14 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
 
   const getAvailablePinsForConnection = (currentConnection: Connection): { value: string; label: string }[] => {
     const availablePins: { value: string; label: string }[] = [];
-    const occupiedPins = new Set<string>(); // "componentId/pinName"
+    const occupiedPins = new Set<string>();
 
-    // Mark all pins used by *other* connections
     connections.forEach(conn => {
       if (conn.id !== currentConnection.id) {
         occupiedPins.add(`${conn.startComponentId}/${conn.startPinName}`);
         occupiedPins.add(`${conn.endComponentId}/${conn.endPinName}`);
       }
     });
-     // Also mark the start pin of the current connection as occupied for the *endpoint* selection
     occupiedPins.add(`${currentConnection.startComponentId}/${currentConnection.startPinName}`);
 
 
@@ -101,7 +103,6 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
       if (definition?.pins) {
         Object.entries(definition.pins).forEach(([pinName, pinDef]) => {
           const pinId = `${comp.id}/${pinName}`;
-          // A pin is available if it's not occupied by another connection OR if it's the current connection's own endpoint
           if (!occupiedPins.has(pinId) || (comp.id === currentConnection.endComponentId && pinName === currentConnection.endPinName)) {
             availablePins.push({
               value: pinId,
@@ -123,6 +124,19 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
     }
   };
 
+  const handleConnectionColorChange = (newColor: string) => {
+    if (connection) {
+      onUpdateConnection(connection.id, { color: newColor });
+    }
+  };
+
+  const handleConnectionWiresChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (connection) {
+      const numWires = parseInt(e.target.value, 10);
+      onUpdateConnection(connection.id, { numberOfWires: isNaN(numWires) || numWires < 1 ? 1 : numWires });
+    }
+  };
+
 
   if (!component && !connection) return null;
 
@@ -135,6 +149,8 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   const endComponent = connection ? allComponents.find(c => c.id === connection.endComponentId) : null;
   const startPinDef = startComponent ? COMPONENT_DEFINITIONS[startComponent.type]?.pins[connection!.startPinName] : null;
   const endPinDef = endComponent ? COMPONENT_DEFINITIONS[endComponent.type]?.pins[connection!.endPinName] : null;
+
+  const isInstallationPlan = projectType === "Installationsschaltplan";
 
   return (
     <div className="h-full w-full bg-card p-4 flex flex-col rounded-lg shadow-md">
@@ -177,7 +193,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                       type="number"
                       value={(currentScale * 100).toFixed(0)}
                       onChange={(e) => handleScaleInputChange({ target: { value: (parseFloat(e.target.value) / 100).toString() } } as any)}
-                      className="w-20 text-sm hide-arrows" 
+                      className="w-20 text-sm hide-arrows"
                       min={(paletteComponent.minScale || 0.1) * 100}
                       max={(paletteComponent.maxScale || 5.0) * 100}
                       step={(paletteComponent.scaleStep || 0.1) * 100}
@@ -193,7 +209,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                     value={[currentScale]}
                     min={paletteComponent.minScale || 0.1}
                     max={paletteComponent.maxScale || 5.0}
-                    step={paletteComponent.scaleStep || 0.01} 
+                    step={paletteComponent.scaleStep || 0.01}
                     onValueChange={handleScaleChange}
                     className="w-full"
                     disabled={isSimulating}
@@ -225,13 +241,13 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                 </div>
               </div>
             )}
-            
+
             {paletteComponent.type === 'ZeitRelaisEin' && paletteComponent.initialPinLabels?.T !== undefined && (
                <div>
                 <h3 className="text-md font-semibold mb-2 text-card-foreground">Einstellungen:</h3>
                   <div className="flex items-center">
                     <Label htmlFor="sidebar-pin-T" className="text-sm text-muted-foreground mr-2 w-1/3">
-                      Zeit (T):
+                      Zeit (T in s):
                     </Label>
                     <Input
                       id="sidebar-pin-T"
@@ -239,7 +255,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                       value={component.displayPinLabels?.['T'] || ''}
                       onChange={(e) => handlePinLabelChange('T', e)}
                       className="w-2/3"
-                      placeholder={paletteComponent.initialPinLabels?.['T'] || 'z.B. 5s'}
+                      placeholder={paletteComponent.initialPinLabels?.['T'] || 'z.B. 5'}
                       disabled={isSimulating}
                     />
                   </div>
@@ -260,12 +276,12 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
             <div>
               <h3 className="text-md font-semibold text-card-foreground">Aktuelle Verbindung:</h3>
               <p className="text-sm text-muted-foreground">ID: <span className="font-medium text-card-foreground">{connection.id}</span></p>
-              <p className="text-sm text-muted-foreground">Start: 
-                <span className="font-medium text-card-foreground"> {startComponent?.label || connection.startComponentId}</span> - Pin 
+              <p className="text-sm text-muted-foreground">Start:
+                <span className="font-medium text-card-foreground"> {startComponent?.label || connection.startComponentId}</span> - Pin
                 <span className="font-medium text-card-foreground"> {startPinDef?.label || connection.startPinName}</span>
               </p>
-              <p className="text-sm text-muted-foreground">Ende: 
-                <span className="font-medium text-card-foreground"> {endComponent?.label || connection.endComponentId}</span> - Pin 
+              <p className="text-sm text-muted-foreground">Ende:
+                <span className="font-medium text-card-foreground"> {endComponent?.label || connection.endComponentId}</span> - Pin
                 <span className="font-medium text-card-foreground"> {endPinDef?.label || connection.endPinName}</span>
               </p>
             </div>
@@ -295,6 +311,44 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                 Nur Pins, die noch nicht Teil einer anderen Verbindung sind, werden angezeigt.
               </p>
             </div>
+            )}
+            {isInstallationPlan && !isSimulating && (
+              <>
+                <div>
+                  <Label htmlFor="connection-color" className="text-sm font-medium text-muted-foreground">
+                    Linienfarbe:
+                  </Label>
+                  <Select
+                    value={connection.color || 'black'}
+                    onValueChange={handleConnectionColorChange}
+                    disabled={isSimulating}
+                  >
+                    <SelectTrigger id="connection-color" className="mt-1">
+                      <SelectValue placeholder="Farbe auswählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="L1">L1 (Braun)</SelectItem>
+                      <SelectItem value="N">N (Blau)</SelectItem>
+                      <SelectItem value="PE">PE (Grün-Gelb)</SelectItem>
+                      <SelectItem value="black">Schwarz (Standard)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="connection-wires" className="text-sm font-medium text-muted-foreground">
+                    Aderanzahl:
+                  </Label>
+                  <Input
+                    id="connection-wires"
+                    type="number"
+                    min="1"
+                    value={connection.numberOfWires || 1}
+                    onChange={handleConnectionWiresChange}
+                    className="mt-1"
+                    disabled={isSimulating}
+                  />
+                </div>
+              </>
             )}
           </div>
         )}

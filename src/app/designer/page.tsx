@@ -60,10 +60,9 @@ const DesignerPageContent: React.FC = () => {
 
   const filteredPaletteComponents = MOCK_PALETTE_COMPONENTS.filter(comp => {
     if (projectType === "Installationsschaltplan") {
-      return comp.category === "Installationselemente" || comp.category === "Energieversorgung"; // Or more specific filtering
+      return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
     }
-    // Default to Steuerstromkreis components if no specific type or other types
-    return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung";
+    return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
   });
 
 
@@ -79,14 +78,14 @@ const DesignerPageContent: React.FC = () => {
         const paletteComp = comp ? getPaletteComponentById(comp.firebaseComponentId) : null;
         const simConfig = paletteComp?.simulation;
         if (simConfig?.controlLogic === 'visualize_energized' || simConfig?.controlLogic === 'energize_coil' || simConfig?.controlLogic === 'timer_on_delay') {
-            if (!newSimCompStates[compId].timerActive) {
+            if (!newSimCompStates[compId].timerActive) { // Don't reset if timer is active (it might be energized by the timer itself)
                 newSimCompStates[compId].isEnergized = false;
             }
         }
     });
 
     let changedInIteration = true;
-    const maxIterations = components.length + connections.length + 20; // Increased max iterations slightly
+    const maxIterations = components.length + connections.length + 20; 
     let iterations = 0;
 
     while (changedInIteration && iterations < maxIterations) {
@@ -97,7 +96,7 @@ const DesignerPageContent: React.FC = () => {
 
         components.forEach(comp => {
             const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-            if (paletteComp?.type === '24V') { // Power source
+            if (paletteComp?.type === '24V') { 
                 const pins = Object.keys(COMPONENT_DEFINITIONS[comp.type]?.pins || {});
                 pins.forEach(pinName => poweredPins.add(`${comp.id}/${pinName}`));
             }
@@ -141,7 +140,7 @@ const DesignerPageContent: React.FC = () => {
                 }
 
 
-                if (startPinIsPowered && !endPinIsPowered) { // Power flows from start to end
+                if (startPinIsPowered && !endPinIsPowered) { 
                     if (!newSimConnStates[conn.id].isConducting) {
                         newSimConnStates[conn.id].isConducting = true;
                         changedInIteration = true;
@@ -151,7 +150,7 @@ const DesignerPageContent: React.FC = () => {
                         propagationChanged = true;
                         changedInIteration = true;
                     }
-                } else if (endPinIsPowered && !startPinIsPowered) { // Power flows from end to start (for bidirectional logic if needed)
+                } else if (endPinIsPowered && !startPinIsPowered) { 
                      if (!newSimConnStates[conn.id].isConducting) {
                         newSimConnStates[conn.id].isConducting = true;
                         changedInIteration = true;
@@ -161,7 +160,7 @@ const DesignerPageContent: React.FC = () => {
                         propagationChanged = true;
                         changedInIteration = true;
                     }
-                } else if (startPinIsPowered && endPinIsPowered) { // Both ends are powered, connection is conducting
+                } else if (startPinIsPowered && endPinIsPowered) { 
                      if (!newSimConnStates[conn.id].isConducting) {
                         newSimConnStates[conn.id].isConducting = true;
                         changedInIteration = true;
@@ -180,7 +179,6 @@ const DesignerPageContent: React.FC = () => {
 
             if (simConfig.controlLogic === 'energize_coil' || simConfig.controlLogic === 'visualize_energized' || simConfig.controlLogic === 'timer_on_delay') {
                 const energizePins = simConfig.energizePins || [];
-                // Component is energized if ALL its energizePins are powered
                 const allEnergizePinsPowered = energizePins.every(pinName => poweredPins.has(`${comp.id}/${pinName}`));
 
                 if (allEnergizePinsPowered && !compState.isEnergized && (!compState.timerActive || simConfig.controlLogic !== 'timer_on_delay')) {
@@ -189,17 +187,18 @@ const DesignerPageContent: React.FC = () => {
 
                     if (simConfig.controlLogic === 'timer_on_delay' && !compState.timerActive) {
                         newSimCompStates[comp.id].timerActive = true;
-                        const duration = simConfig.timerDurationMs || 0;
+                        const durationStr = comp.displayPinLabels?.T || simConfig.timerDurationMs?.toString() || '0';
+                        const duration = parseInt(durationStr, 10) * 1000 || simConfig.timerDurationMs || 0;
                         newSimCompStates[comp.id].timerRemaining = duration;
-
-                        activeTimerTimeouts.current = activeTimerTimeouts.current.filter(t => t.compId !== comp.id);
+                        
                         const existingTimer = activeTimerTimeouts.current.find(t => t.compId === comp.id);
                         if (existingTimer) clearTimeout(existingTimer.timerId);
+                        activeTimerTimeouts.current = activeTimerTimeouts.current.filter(t => t.compId !== comp.id);
 
 
                         const timerId = setTimeout(() => {
                            setSimulatedComponentStates(prev => {
-                                if (!prev[comp.id] || !getPaletteComponentById(comp.firebaseComponentId)?.simulation) return prev; // Component might have been deleted
+                                if (!prev[comp.id] || !getPaletteComponentById(comp.firebaseComponentId)?.simulation) return prev; 
                                 const currentPalette = getPaletteComponentById(comp.firebaseComponentId)!;
                                 const currentSimConfig = currentPalette.simulation!;
                                 const updatedState = {
@@ -207,9 +206,9 @@ const DesignerPageContent: React.FC = () => {
                                    currentContactState: { ...(currentSimConfig.outputPinStateOnEnergized || {}) },
                                    timerActive: false,
                                    timerRemaining: 0,
-                                   isEnergized: true, // Keep energized after timer if applicable
+                                   isEnergized: true, 
                                };
-                               runSimulationStep(); // Re-run simulation for cascading effects
+                               runSimulationStep(); 
                                return {...prev, [comp.id]: updatedState };
                            });
                         }, duration);
@@ -218,19 +217,16 @@ const DesignerPageContent: React.FC = () => {
                 } else if (!allEnergizePinsPowered && compState.isEnergized && simConfig.controlLogic !== 'timer_on_delay') {
                     newSimCompStates[comp.id].isEnergized = false;
                     changedInIteration = true;
-                    // If a timer was active and is now de-energized before completion
                     if (simConfig.controlLogic === 'timer_on_delay' && compState.timerActive) {
                         clearTimeout(activeTimerTimeouts.current.find(t => t.compId === comp.id)?.timerId);
                         activeTimerTimeouts.current = activeTimerTimeouts.current.filter(t => t.compId !== comp.id);
                         newSimCompStates[comp.id].timerActive = false;
                         newSimCompStates[comp.id].timerRemaining = null;
-                        // Reset contacts to de-energized state
                         newSimCompStates[comp.id].currentContactState = { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) };
                     }
                 }
             }
 
-            // Handle components controlled by label match (e.g., Schütz contacts)
             if (simConfig.controlledBy === 'label_match' && comp.label && paletteComp?.type !== 'SchuetzSpule' && paletteComp?.type !== 'ZeitRelaisEin') {
                 const controllingCoils = components.filter(c => {
                     const p = getPaletteComponentById(c.firebaseComponentId);
@@ -243,14 +239,11 @@ const DesignerPageContent: React.FC = () => {
                     isAnyControllingCoilEnergized = controllingCoils.some(controllingCoil => {
                         const coilState = newSimCompStates[controllingCoil.id];
                         const coilPalette = getPaletteComponentById(controllingCoil.firebaseComponentId);
-                        // For timer relays, check if its output state implies energized (contacts have changed)
                         if (coilPalette?.simulation?.controlLogic === 'timer_on_delay') {
-                            // Energized if the currentContactState matches the outputPinStateOnEnergized of the timer coil definition
-                             return Object.keys(coilState?.currentContactState || {}).length > 0 && // has some contact state
+                             return Object.keys(coilState?.currentContactState || {}).length > 0 &&
                                    JSON.stringify(coilState?.currentContactState) === JSON.stringify(coilPalette.simulation.outputPinStateOnEnergized);
 
                         }
-                        // For regular coils, just check isEnergized
                         return coilState?.isEnergized;
                     });
                 }
@@ -266,13 +259,13 @@ const DesignerPageContent: React.FC = () => {
                 }
             }
         });
-    } // End of while loop
+    } 
 
     setSimulatedComponentStates(newSimCompStates);
     setSimulatedConnectionStates(newSimConnStates);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSimulating, components, connections, simulatedComponentStates /* removed simulatedConnectionStates from deps to avoid potential loop*/]);
+  }, [isSimulating, components, connections, simulatedComponentStates]);
 
 
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
@@ -302,15 +295,14 @@ const DesignerPageContent: React.FC = () => {
                 ...prev,
                 [component.id]: {
                     ...prev[component.id],
-                    // Revert to initial/de-energized state if it's a momentary press
                     currentContactState: { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) }
                 }
             }));
         }
         setPressedComponentId(null);
-        if(simConfig?.interactable) runSimulationStep(); // Re-run simulation after user interaction
+        if(simConfig?.interactable) runSimulationStep(); 
     }
-  }, [pressedComponentId, components, runSimulationStep]); // Removed setSimulatedComponentStates to rely on runSimulationStep for updates
+  }, [pressedComponentId, components, runSimulationStep]); 
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -318,7 +310,6 @@ const DesignerPageContent: React.FC = () => {
       handleComponentMouseDownInSim(id);
       return;
     }
-    // Standard drag logic
     const component = components.find(c => c.id === id);
     if (component && svgRef.current) {
       setDraggingComponentId(id);
@@ -400,29 +391,24 @@ const DesignerPageContent: React.FC = () => {
     if (isSimulating) {
       runSimulationStep();
     } else {
-        // Clear any active timers when simulation stops
         activeTimerTimeouts.current.forEach(t => clearTimeout(t.timerId));
         activeTimerTimeouts.current = [];
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSimulating, components, connections]); // runSimulationStep is called internally or by user actions
+  }, [isSimulating, components, connections]); 
 
   useEffect(() => {
-    // This effect listens for changes in simulatedComponentStates
-    // and re-runs the simulation step if it's active.
-    // This is important for cascading effects, e.g., a timer completes and changes a contact state.
     if (isSimulating) {
         runSimulationStep();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulatedComponentStates]); // Only re-run if component states change
+  }, [simulatedComponentStates]); 
 
 
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
       const newSimulatingState = !prev;
       if (newSimulatingState) {
-        // Initialize simulation states
         const initialSimCompStates: { [key: string]: SimulatedComponentState } = {};
         components.forEach(comp => {
           const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
@@ -442,16 +428,14 @@ const DesignerPageContent: React.FC = () => {
           initialSimConnStates[conn.id] = { isConducting: false };
         });
         setSimulatedConnectionStates(initialSimConnStates);
-        // runSimulationStep(); // Initial run after setting states
       } else {
-        // Clear timers and reset pressed component when stopping simulation
         activeTimerTimeouts.current.forEach(t => clearTimeout(t.timerId));
         activeTimerTimeouts.current = [];
         setPressedComponentId(null);
       }
       return newSimulatingState;
     });
-  }, [components, connections, setIsSimulating, setSimulatedComponentStates, setSimulatedConnectionStates /* removed runSimulationStep */]);
+  }, [components, connections]);
 
 
   const handlePinClick = (componentId: string, pinName: string, pinCoords: Point) => {
@@ -496,8 +480,9 @@ const DesignerPageContent: React.FC = () => {
           startPinName: connectingPin.pinName,
           endComponentId: componentId,
           endPinName: pinName,
-          color: projectType === "Installationsschaltplan" ? "black" : undefined, // Default color for installation
-          numberOfWires: projectType === "Installationsschaltplan" ? 1 : undefined, // Default wires for installation
+          color: projectType === "Installationsschaltplan" ? "black" : undefined,
+          numberOfWires: projectType === "Installationsschaltplan" ? 1 : undefined,
+          waypoints: [],
         },
       ]);
       toast({ title: "Verbindung erstellt", description: `Zwischen ${connectingPin.componentId}/${connectingPin.pinName} und ${componentId}/${pinName}.` });
@@ -531,7 +516,7 @@ const DesignerPageContent: React.FC = () => {
                 let isActiveState = false;
                 if (simConfig.outputPinStateOnEnergized && simConfig.outputPinStateOnDeEnergized) {
                      isActiveState = JSON.stringify(currentSimState.currentContactState) === JSON.stringify(simConfig.outputPinStateOnEnergized);
-                } else if (simConfig.initialContactState) { // Generic toggle if specific onEnergized/DeEnergized not defined
+                } else if (simConfig.initialContactState) { 
                      isActiveState = JSON.stringify(currentSimState.currentContactState) !== JSON.stringify(simConfig.initialContactState);
                 }
 
@@ -542,7 +527,6 @@ const DesignerPageContent: React.FC = () => {
                     Object.assign(newPinStates, (simConfig.outputPinStateOnEnergized || simConfig.initialContactState || {}));
                 }
                 const newCompState = { ...prev, [id]: { ...currentSimState, currentContactState: newPinStates } };
-                // No direct call to runSimulationStep here, rely on useEffect on simulatedComponentStates
                 return newCompState;
             });
         }
@@ -576,7 +560,7 @@ const DesignerPageContent: React.FC = () => {
     const simConfig = paletteComp?.simulation;
 
     if (component && simConfig?.interactable && simConfig.controlLogic === 'toggle_on_press') {
-        setPressedComponentId(id); // Mark as pressed
+        setPressedComponentId(id); 
         setSimulatedComponentStates(prev => {
             const currentSimState = prev[id] || { currentContactState: { ...simConfig.initialContactState } };
             const activeState = simConfig.outputPinStateOnEnergized || {};
@@ -589,7 +573,6 @@ const DesignerPageContent: React.FC = () => {
                     currentContactState: newContactState
                 }
             };
-            // No direct call to runSimulationStep here
             return newCompState;
         });
     }
@@ -623,6 +606,20 @@ const DesignerPageContent: React.FC = () => {
       )
     );
     toast({ title: "Verbindung geändert", description: `Endpunkt der Verbindung ${connectionId} aktualisiert.` });
+     if (isSimulating) {
+      runSimulationStep();
+    }
+  };
+
+  const handleUpdateConnection = (connectionId: string, updates: Partial<Connection>) => {
+    setConnections(prevConnections =>
+      prevConnections.map(conn =>
+        conn.id === connectionId
+          ? { ...conn, ...updates }
+          : conn
+      )
+    );
+    toast({ title: "Verbindung aktualisiert", description: `Eigenschaften der Verbindung ${connectionId} geändert.` });
      if (isSimulating) {
       runSimulationStep();
     }
@@ -663,8 +660,7 @@ const DesignerPageContent: React.FC = () => {
     setComponents(prev => [...prev, newComponent]);
     setSelectedComponentForSidebar(newComponent);
     setSelectedConnectionId(null);
-    setIsPropertiesSidebarOpen(true); // Open sidebar for the new component
-    // toast({ title: "Komponente hinzugefügt", description: `${newLabel} (${paletteItem.name}) wurde der Arbeitsfläche hinzugefügt.` });
+    setIsPropertiesSidebarOpen(true);
   };
 
   const confirmDelete = (type: 'component' | 'connection', id: string) => {
@@ -811,7 +807,9 @@ const DesignerPageContent: React.FC = () => {
                 onDeleteComponent={(id) => confirmDelete('component', id)}
                 onDeleteConnection={handleDeleteConnectionFromSidebar}
                 onUpdateConnectionEndpoint={handleUpdateConnectionEndpoint}
+                onUpdateConnection={handleUpdateConnection}
                 isSimulating={isSimulating}
+                projectType={projectType}
               />
         </div>
       )}
