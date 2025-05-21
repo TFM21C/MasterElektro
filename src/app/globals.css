@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 0 0% 88%; /* Light Gray #E0E0E0 */
-    --foreground: 222.2 47.4% 11.2%; /* Dark Blue */
+    --background: 220 25% 96%; /* Light cool gray for overall page background */
+    --foreground: 220 25% 20%; /* Dark gray/blue for text */
 
-    --card: 0 0% 93%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card: 0 0% 100%; /* White for main content panels, canvas background */
+    --card-foreground: 220 25% 20%; /* Dark text on cards */
 
-    --popover: 0 0% 93%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover: 0 0% 100%; /* White for popovers */
+    --popover-foreground: 220 25% 20%; /* Dark text on popovers */
 
-    --primary: 222.2 47.4% 11.2%; /* Dark Blue */
-    --primary-foreground: 210 40% 98%; /* White */
+    --primary: 217 91% 60%; /* Vibrant blue for buttons, interactive elements */
+    --primary-foreground: 0 0% 100%; /* White text on primary buttons */
 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 220 20% 93%; /* Slightly darker gray for secondary elements or backgrounds */
+    --secondary-foreground: 220 25% 25%; /* Darker text on secondary */
 
-    --muted: 0 0% 92%; /* Slightly adjusted Muted */
-    --muted-foreground: 0 0% 45.1%;
+    --muted: 220 20% 95%; /* Lighter gray for muted elements */
+    --muted-foreground: 220 15% 45%; /* Medium gray for muted text */
 
-    --accent: 110 100% 85%; /* Soft Green #BDFFB4 */
-    --accent-foreground: 110 60% 20%; /* Dark Green for text on accent */
+    --accent: 217 91% 90%; /* Light blue for hover states or subtle accents */
+    --accent-foreground: 217 91% 25%; /* Dark blue text on accent */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%; /* Red for destructive actions */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
-    --border: 0 0% 80%;
-    --input: 0 0% 80%;
-    --ring: 182 100% 74%; /* Electric Blue #7DF9FF for focus rings */
+    --border: 220 20% 88%; /* Light gray for borders */
+    --input: 0 0% 100%; /* White for input backgrounds, matching cards */
+    --ring: 217 91% 55%; /* Primary blue for focus rings */
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -39,45 +39,45 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Sidebar specific colors, can be adjusted if needed for better harmony with the new theme */
-    --sidebar-background: 0 0% 95%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 222.2 47.4% 11.2%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 110 100% 90%; /* Lighter Soft Green for sidebar accent */
-    --sidebar-accent-foreground: 110 60% 20%;
-    --sidebar-border: 0 0% 85%;
-    --sidebar-ring: 182 100% 74%;
+    /* Sidebar specific colors from screenshot */
+    --sidebar-background: 220 20% 92%; /* Medium-light gray for sidebar */
+    --sidebar-foreground: 220 25% 15%; /* Dark text for sidebar */
+    --sidebar-primary: 217 91% 60%; /* Blue for active/primary items in sidebar */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text on sidebar primary */
+    --sidebar-accent: 217 91% 85%; /* Lighter blue for hover on sidebar items */
+    --sidebar-accent-foreground: 217 91% 20%; /* Darker blue text for sidebar accent hover */
+    --sidebar-border: 220 20% 85%; /* Border color within or around sidebar */
+    --sidebar-ring: 217 91% 55%; /* Focus ring for sidebar elements */
   }
 
   .dark {
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 210 40% 98%;
+    --background: 220 20% 10%; /* Dark slate blue */
+    --foreground: 220 15% 90%; /* Light gray */
 
-    --card: 222.2 47.4% 11.2%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 13%; /* Slightly lighter dark slate blue */
+    --card-foreground: 220 15% 90%;
 
-    --popover: 222.2 47.4% 11.2%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 13%;
+    --popover-foreground: 220 15% 90%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 65%; /* Brighter blue for dark mode */
+    --primary-foreground: 217 91% 10%; /* Very dark blue for text on primary */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 20% 18%; /* Darker shade for secondary elements */
+    --secondary-foreground: 220 15% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 110 80% 70%; /* Adjusted Soft Green for dark mode */
-    --accent-foreground: 110 100% 15%;
+    --accent: 217 91% 55%; /* Slightly less bright blue for accents */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 65% 55%; /* A slightly less intense red for dark mode */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 182 100% 60%; /* Adjusted Electric Blue for dark mode rings */
+    --border: 220 20% 25%; /* Darker gray for borders */
+    --input: 220 20% 16%; /* Slightly lighter than card for inputs if needed */
+    --ring: 217 91% 60%; /* Primary blue for focus rings */
     
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -85,14 +85,15 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    --sidebar-background: 224 71.4% 4.1%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 210 20% 98%;
-    --sidebar-primary-foreground: 224 71.4% 4.1%;
-    --sidebar-accent: 210 20% 98%;
-    --sidebar-accent-foreground: 224 71.4% 4.1%;
-    --sidebar-border: 215 13.8% 22.5%;
-    --sidebar-ring: 182 100% 60%;
+    /* Sidebar specific colors for dark mode */
+    --sidebar-background: 220 20% 12%; /* Slightly different from main dark bg */
+    --sidebar-foreground: 220 15% 90%;
+    --sidebar-primary: 217 91% 65%; /* Consistent with primary */
+    --sidebar-primary-foreground: 217 91% 10%;
+    --sidebar-accent: 217 91% 50%; /* Darker accent for hover */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -107,24 +108,24 @@
 
 /* Styles from user's SVG, can be global or scoped */
 .line {
-  stroke: hsl(var(--foreground)); /* Use theme variable */
-  stroke-width: 1.5; /* Slightly thicker for better visibility */
+  stroke: hsl(var(--foreground)); 
+  stroke-width: 1.5; 
   fill: none;
 }
 .symbol {
-  stroke: hsl(var(--foreground)); /* Use theme variable */
+  stroke: hsl(var(--foreground)); 
   stroke-width: 1.5;
-  fill: hsl(var(--background)); /* Use theme variable for fill */
+  fill: hsl(var(--background)); 
 }
 .text-pin {
-  font-size: 8px; /* Slightly larger */
-  fill: hsl(var(--muted-foreground)); /* Use theme variable */
-  text-anchor: middle; /* Center pin labels typically */
+  font-size: 8px; 
+  fill: hsl(var(--muted-foreground)); 
+  text-anchor: middle; 
   dominant-baseline: middle;
 }
 .component-text {
-  font-size: 10px; /* Slightly larger */
-  fill: hsl(var(--foreground)); /* Use theme variable */
+  font-size: 10px; 
+  fill: hsl(var(--foreground)); 
   text-anchor: start;
   dominant-baseline: middle;
 }
@@ -132,6 +133,6 @@
   transition: fill 0.2s ease-in-out;
 }
 .pin-circle:hover {
-  fill: hsl(var(--destructive)); /* Use theme destructive color for hover */
+  fill: hsl(var(--destructive)); 
   opacity: 0.7;
 }
