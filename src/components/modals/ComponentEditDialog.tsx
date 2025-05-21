@@ -1,4 +1,4 @@
-import type React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,12 +21,12 @@ interface ComponentEditDialogProps {
 }
 
 const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, isOpen, onClose, onSave }) => {
-  const [currentLabel, setCurrentLabel] = React.useState(component.label);
-  const [currentPinLabels, setCurrentPinLabels] = React.useState(
+  const [currentLabel, setCurrentLabel] = useState(component.label);
+  const [currentPinLabels, setCurrentPinLabels] = useState(
     component.displayPinLabels || COMPONENT_DEFINITIONS[component.type]?.initialDisplayPinLabels || {}
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentLabel(component.label);
     setCurrentPinLabels(component.displayPinLabels || COMPONENT_DEFINITIONS[component.type]?.initialDisplayPinLabels || {});
   }, [component]);
