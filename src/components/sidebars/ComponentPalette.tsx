@@ -1,20 +1,23 @@
-import React, { useMemo } from 'react'; // Import React
+
+import React, { useMemo } from 'react'; 
 import { Button } from "@/components/ui/button";
 import PaletteIcon from '@/components/circuit/PaletteIcon';
 import { ChevronDown, ChevronsRightLeft } from "lucide-react";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { PaletteComponentFirebaseData } from '@/types/circuit';
-import { MOCK_PALETTE_COMPONENTS } from '@/config/mock-palette-data'; // Import mock data
+// MOCK_PALETTE_COMPONENTS will be passed as a prop
+// import { MOCK_PALETTE_COMPONENTS } from '@/config/mock-palette-data';
 
 interface ComponentPaletteProps {
   onAddComponent: (componentData: PaletteComponentFirebaseData) => void;
   isOpen: boolean;
   onToggle: () => void;
+  paletteComponents: PaletteComponentFirebaseData[]; // Accept components as a prop
 }
 
-const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isOpen, onToggle }) => {
+const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isOpen, onToggle, paletteComponents }) => {
   const groupedComponents = useMemo(() => {
-    return MOCK_PALETTE_COMPONENTS.reduce((acc, component) => {
+    return paletteComponents.reduce((acc, component) => {
       const category = component.category || 'Sonstige';
       if (!acc[category]) {
         acc[category] = [];
@@ -22,12 +25,12 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
       acc[category].push(component);
       return acc;
     }, {} as Record<string, PaletteComponentFirebaseData[]>);
-  }, []);
+  }, [paletteComponents]);
 
-  const categories = Object.keys(groupedComponents);
+  const categories = Object.keys(groupedComponents).sort(); // Sort categories alphabetically
 
   return (
-    <div className={`bg-card h-full p-3 flex flex-col shadow-lg transition-all duration-300 ease-in-out rounded-lg ${isOpen ? 'w-64' : 'w-16 items-center'}`}> {/* Increased width when open */}
+    <div className={`bg-card h-full p-3 flex flex-col shadow-lg transition-all duration-300 ease-in-out rounded-lg ${isOpen ? 'w-64' : 'w-16 items-center'}`}>
       <Button
         onClick={onToggle}
         variant="ghost"
@@ -58,8 +61,10 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
                   variant="outline" 
                   className="w-full h-auto p-2 bg-card hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border-border text-left"
                 >
-                  <PaletteIcon type={componentData.paletteIconType || componentData.type} />
-                  <span className="mt-1.5 px-2 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block leading-snug max-w-full break-words">
+                  <div className="bg-white p-1 rounded mb-1.5 inline-block"> {/* Ensures white background for icon */}
+                    <PaletteIcon type={componentData.paletteIconType || componentData.type} />
+                  </div>
+                  <span className="px-2 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block leading-snug max-w-full break-words">
                     {componentData.name}
                   </span>
                 </Button>

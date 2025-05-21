@@ -51,3 +51,32 @@ export interface ElectricalComponent {
 }
 
 export type Point = { x: number; y: number };
+
+export interface Connection {
+  id: string;
+  startComponentId: string;
+  startPinName: string;
+  endComponentId: string;
+  endPinName: string;
+}
+
+export const ProjectTypes = [
+  "Hauptstromkreis",
+  "Steuerstromkreis",
+  "Übersichtsschaltplan",
+  "Stromlaufplan in zusammenhängender Darstellung",
+  "Stromlaufplan in aufgelöster Darstellung",
+] as const;
+
+export type ProjectType = (typeof ProjectTypes)[number];
+
+export interface ProjectData {
+  id: string;
+  projectName: string;
+  projectType: ProjectType;
+  creatorName?: string;
+  createdAt: Date;
+  lastModified: Date;
+  components: ElectricalComponent[];
+  connections: Connection[];
+}
