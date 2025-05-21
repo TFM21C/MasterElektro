@@ -47,12 +47,12 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
       </Button>
       
       {isOpen && (
-        <div className="flex-grow w-full overflow-hidden animate-in fade-in-0 duration-300">
+        <div className="flex-grow w-full overflow-hidden"> {/* Removed animate-in from here */}
           <ScrollArea className="h-full w-full">
             <div> {/* Wrapper for all categories to be the direct child of ScrollArea's viewport */}
               {categories.map(category => (
                 <div key={category} className="mb-4">
-                  <h3 className="text-md font-semibold bg-gray-900 text-white mb-2 p-2 rounded-md text-center sticky top-0 z-10">
+                  <h3 className="text-md font-semibold bg-gray-900 text-white mb-2 p-2 rounded-md text-center"> {/* Removed sticky top-0 z-10 */}
                     {category}
                   </h3>
                   <div className="space-y-2 w-full">
