@@ -106,7 +106,7 @@
   }
 }
 
-/* Styles from user's SVG, can be global or scoped */
+/* Styles for SVG components */
 .line {
   stroke: hsl(var(--foreground)); 
   stroke-width: 1.5; 
@@ -115,16 +115,16 @@
 .symbol {
   stroke: hsl(var(--foreground)); 
   stroke-width: 1.5;
-  fill: hsl(var(--background)); 
+  fill: hsl(var(--card)); /* Updated to card background */
 }
 .text-pin {
-  font-size: 8px; 
+  font-size: 12px; /* Increased size */
   fill: hsl(var(--muted-foreground)); 
   text-anchor: middle; 
   dominant-baseline: middle;
 }
 .component-text {
-  font-size: 10px; 
+  font-size: 14px; /* Increased size */
   fill: hsl(var(--foreground)); 
   text-anchor: start;
   dominant-baseline: middle;

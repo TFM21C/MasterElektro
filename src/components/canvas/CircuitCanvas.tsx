@@ -37,7 +37,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      className="border border-border bg-background rounded-lg shadow-inner flex-grow"
+      className="border border-border bg-card rounded-lg shadow-inner flex-grow" // Changed bg-background to bg-card
       data-testid="circuit-canvas"
     >
       {/* SVG Styles are in globals.css now */}

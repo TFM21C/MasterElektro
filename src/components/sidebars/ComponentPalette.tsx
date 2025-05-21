@@ -46,7 +46,7 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
               key={type}
               onClick={() => onAddComponent(type)}
               variant="default"
-              className="w-full h-auto py-2 px-2 bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group"
+              className="w-full h-auto py-2 px-2 bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border border-black"
             >
               <PaletteIcon type={type} />
               {isOpen && <span className="mt-1 text-xs text-center">{componentLabels[type]}</span>}

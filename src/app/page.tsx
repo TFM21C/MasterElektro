@@ -316,7 +316,7 @@ export default function CircuitCraftPage() {
 
         <Accordion type="single" collapsible className="w-full p-4 border-t border-border">
           <AccordionItem value="info">
-            <AccordionTrigger className="text-sm hover:no-underline">
+            <AccordionTrigger className="text-sm hover:no-underline bg-primary text-primary-foreground border border-black rounded-md px-4">
                 <Info className="mr-2 h-4 w-4" /> Informationen & Bedienung
             </AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground space-y-1 pt-2">
