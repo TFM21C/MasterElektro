@@ -10,38 +10,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ElectricalComponent } from '@/types/circuit';
-import { COMPONENT_DEFINITIONS } from '@/config/component-definitions';
+import type { ElectricalComponent, PaletteComponentFirebaseData } from '@/types/circuit';
+// COMPONENT_DEFINITIONS is not directly needed here if all info comes from paletteComponent
 
 interface ComponentEditDialogProps {
   component: ElectricalComponent;
+  paletteComponent?: PaletteComponentFirebaseData; // Make optional or ensure it's always passed
   isOpen: boolean;
   onClose: () => void;
   onSave: (id: string, newLabel: string, newPinLabels: Record<string, string>) => void;
 }
 
-const getComponentDisplayName = (type: string): string => {
-  const nameMap: Record<string, string> = {
-    'Schließer': 'Schalter',
-    'Öffner': 'Schalter',
-    'Motor': 'Motor',
-    'Lampe': 'Lampe',
-    '24V': '24V Quelle',
-    '0V': '0V Quelle',
-  };
-  return nameMap[type] || type; // Fallback to the technical type name
-};
-
-const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, isOpen, onClose, onSave }) => {
+const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, paletteComponent, isOpen, onClose, onSave }) => {
   const [currentLabel, setCurrentLabel] = useState(component.label);
   const [currentPinLabels, setCurrentPinLabels] = useState(
-    component.displayPinLabels || COMPONENT_DEFINITIONS[component.type]?.initialDisplayPinLabels || {}
+    component.displayPinLabels || paletteComponent?.initialPinLabels || {}
   );
 
   useEffect(() => {
     setCurrentLabel(component.label);
-    setCurrentPinLabels(component.displayPinLabels || COMPONENT_DEFINITIONS[component.type]?.initialDisplayPinLabels || {});
-  }, [component]);
+    setCurrentPinLabels(component.displayPinLabels || paletteComponent?.initialPinLabels || {});
+  }, [component, paletteComponent]);
 
   const handleSave = () => {
     onSave(component.id, currentLabel, currentPinLabels);
@@ -55,14 +44,25 @@ const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, is
     }));
   };
 
-  const definition = COMPONENT_DEFINITIONS[component.type];
-  const canEditPins = component.type === 'Schließer' || component.type === 'Öffner';
+  if (!paletteComponent) {
+    // Handle case where paletteComponent data might not be available (e.g., for legacy components)
+    // Or ensure it's always passed by the parent. For now, let's render a generic title.
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent><DialogHeader><DialogTitle>Komponente bearbeiten</DialogTitle></DialogHeader>...</DialogContent>
+        </Dialog>
+    );
+  }
+
+
+  const canEditPins = paletteComponent.hasEditablePins;
+  const pinKeysToEdit = Object.keys(paletteComponent.initialPinLabels || {});
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{`${getComponentDisplayName(component.type)} bearbeiten`}</DialogTitle>
+          <DialogTitle>{`${paletteComponent.name} bearbeiten`}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -77,23 +77,40 @@ const ComponentEditDialog: React.FC<ComponentEditDialogProps> = ({ component, is
             />
           </div>
 
-          {canEditPins && definition?.pins && (
+          {canEditPins && pinKeysToEdit.length > 0 && (
             <>
               <h3 className="text-md font-semibold col-span-4 pt-2">Kontaktkennzeichnungen:</h3>
-              {Object.keys(definition.pins).map((pinName, index) => (
-                <div key={pinName} className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor={`pin-${pinName}`} className="text-right">
-                    Kontakt {index + 1}
+              {pinKeysToEdit.map((pinKey) => (
+                <div key={pinKey} className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor={`pin-${pinKey}`} className="text-right">
+                    {/* Use a generic "Kontakt X" or try to get a more meaningful name if available */}
+                    Kontakt {pinKey}
                   </Label>
                   <Input
-                    id={`pin-${pinName}`}
-                    value={currentPinLabels[pinName] || ''}
-                    onChange={(e) => handlePinLabelChange(pinName, e)}
+                    id={`pin-${pinKey}`}
+                    value={currentPinLabels[pinKey] || ''}
+                    onChange={(e) => handlePinLabelChange(pinKey, e)}
                     className="col-span-3"
+                    placeholder={paletteComponent.initialPinLabels[pinKey] || ''}
                   />
                 </div>
               ))}
             </>
+          )}
+          {/* Add field for Time 'T' if it's a ZeitRelaisEin */}
+          {paletteComponent.type === 'ZeitRelaisEin' && paletteComponent.initialPinLabels?.T !== undefined && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="pin-T" className="text-right">
+                Zeit (T)
+              </Label>
+              <Input
+                id="pin-T"
+                value={currentPinLabels['T'] || ''}
+                onChange={(e) => handlePinLabelChange('T', e)}
+                className="col-span-3"
+                placeholder={paletteComponent.initialPinLabels['T'] || 'z.B. 5s'}
+              />
+            </div>
           )}
         </div>
         <DialogFooter>

@@ -1,14 +1,16 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Download, Lightbulb, Info, Trash2, Settings2 } from 'lucide-react';
+import { Download, Lightbulb, Info } from 'lucide-react'; // Removed Trash2, Settings2 for now
 import { useToast } from "@/hooks/use-toast";
 
-import type { ElectricalComponent, Connection, Point } from '@/types/circuit';
+import type { ElectricalComponent, Connection, Point, PaletteComponentFirebaseData } from '@/types/circuit';
 import { COMPONENT_DEFINITIONS } from '@/config/component-definitions';
-import PaletteIcon from '@/components/circuit/PaletteIcon';
+import { MOCK_PALETTE_COMPONENTS, getPaletteComponentById } from '@/config/mock-palette-data'; // Import mock data
+
 import DraggableComponent from '@/components/circuit/DraggableComponent';
 import ComponentEditDialog from '@/components/modals/ComponentEditDialog';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
@@ -20,12 +22,15 @@ import { exportSvg } from '@/lib/svg-export';
 
 
 const initialComponents: ElectricalComponent[] = [
-  { id: 'source24v', type: '24V', x: 50, y: 50, label: '+24V' },
-  { id: 'source0v', type: '0V', x: 50, y: 650, label: '0V' },
-  { id: 's1', type: 'Schließer', x: 200, y: 150, label: 'S1', state: COMPONENT_DEFINITIONS['Schließer'].initialState, displayPinLabels: COMPONENT_DEFINITIONS['Schließer'].initialDisplayPinLabels },
-  { id: 's2', type: 'Öffner', x: 350, y: 150, label: 'S2', state: COMPONENT_DEFINITIONS['Öffner'].initialState, displayPinLabels: COMPONENT_DEFINITIONS['Öffner'].initialDisplayPinLabels },
-  { id: 'm1', type: 'Motor', x: 500, y: 300, label: 'M1' },
-  { id: 'l1', type: 'Lampe', x: 650, y: 300, label: 'H1' },
+  // Example: Add a 24V source using the new structure for demonstration
+  // { 
+  //   id: 'source24v_inst1', 
+  //   type: '24V', 
+  //   firebaseComponentId: 'spannung_24v', 
+  //   x: 50, y: 50, 
+  //   label: '+24V1', 
+  //   displayPinLabels: getPaletteComponentById('spannung_24v')?.initialPinLabels 
+  // },
 ];
 
 export default function CircuitCraftPage() {
@@ -121,7 +126,6 @@ export default function CircuitCraftPage() {
     const resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
-        // Keep a minimum height, adjust width, or use aspect ratio
         setCanvasDimensions({ width: Math.max(width, 300), height: Math.max(height - 50, 300) });
       }
     });
@@ -175,24 +179,31 @@ export default function CircuitCraftPage() {
   const handleComponentClick = (id: string, isDoubleClick = false) => {
     const component = components.find(c => c.id === id);
     if (!component) return;
+    
+    const paletteDef = getPaletteComponentById(component.firebaseComponentId);
 
     if (isDoubleClick) {
       setComponentToEdit(component);
       setIsEditModalOpen(true);
       setIsPropertiesSidebarOpen(false);
     } else {
-      if ((component.type === 'Schließer' || component.type === 'Öffner') && !connectingPin) {
-        setComponents(prev =>
-          prev.map(comp => {
-            if (comp.id === id) {
-              const newState = { ...comp.state };
-              if (comp.type === 'Schließer') newState.isOpen = !newState.isOpen;
-              else if (comp.type === 'Öffner') newState.isClosed = !newState.isClosed;
-              return { ...comp, state: newState };
-            }
-            return comp;
-          })
-        );
+      if (paletteDef?.hasToggleState && !connectingPin) {
+        // Toggle state logic
+        const definition = COMPONENT_DEFINITIONS[component.type];
+        if (definition?.initialState) { // Check if initial state is defined
+           setComponents(prev =>
+            prev.map(comp => {
+              if (comp.id === id) {
+                const newState = { ...(comp.state || definition.initialState) }; // Use current or initial state
+                if (comp.type === 'Schließer') newState.isOpen = !newState.isOpen;
+                else if (comp.type === 'Öffner') newState.isClosed = !newState.isClosed;
+                // Add other toggleable states here if needed
+                return { ...comp, state: newState };
+              }
+              return comp;
+            })
+          );
+        }
       }
       setSelectedComponentForSidebar(component);
       setIsPropertiesSidebarOpen(true);
@@ -218,27 +229,36 @@ export default function CircuitCraftPage() {
     setSelectedComponentForSidebar(prev => (prev && prev.id === id ? { ...prev, ...updates } : prev));
   };
 
-  const addComponent = (type: string) => {
-    const newId = `${type.toLowerCase().replace(/[^a-z0-9]/gi, '')}-${Date.now()}`;
-    const definition = COMPONENT_DEFINITIONS[type];
-    const existingOfType = components.filter(c => c.type === type).length;
-    let newLabel = `${type.charAt(0).toUpperCase()}${existingOfType + 1}`;
-     if (type === 'Schließer') newLabel = `S${components.filter(c => c.type === 'Schließer' || c.type === 'Öffner').length + 1}`;
-     else if (type === 'Öffner') newLabel = `S${components.filter(c => c.type === 'Schließer' || c.type === 'Öffner').length + 1}`;
-     else if (type === 'Motor') newLabel = `M${existingOfType + 1}`;
-     else if (type === 'Lampe') newLabel = `H${existingOfType + 1}`;
+  const addComponent = (paletteItem: PaletteComponentFirebaseData) => {
+    const newId = `${paletteItem.id.replace(/[^a-z0-9]/gi, '')}-${Date.now()}`;
+    const definition = COMPONENT_DEFINITIONS[paletteItem.type];
+    
+    // Generate a unique label based on prefix and count
+    const existingOfType = components.filter(c => c.firebaseComponentId === paletteItem.id).length;
+    let newLabel = `${paletteItem.defaultLabelPrefix}${existingOfType + 1}`;
+    if (paletteItem.defaultLabelPrefix === '+24V' || paletteItem.defaultLabelPrefix === '0V') {
+      newLabel = paletteItem.defaultLabelPrefix; // For sources, use the prefix directly if only one is typical
+      if (components.some(c => c.label === newLabel)) { // Add number if already exists
+        newLabel = `${paletteItem.defaultLabelPrefix}${existingOfType + 1}`;
+      }
+    }
 
 
     const newComponent: ElectricalComponent = {
-      id: newId, type, x: 100, y: 100 + components.length * 20, label: newLabel,
-      state: definition.initialState ? { ...definition.initialState } : undefined,
-      displayPinLabels: definition.initialDisplayPinLabels ? { ...definition.initialDisplayPinLabels } : undefined,
+      id: newId,
+      type: paletteItem.type,
+      firebaseComponentId: paletteItem.id,
+      x: 100 + components.length * 10, 
+      y: 100 + components.length * 10,
+      label: newLabel,
+      state: definition?.initialState ? { ...definition.initialState } : undefined,
+      displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
     };
     setComponents(prev => [...prev, newComponent]);
-    setComponentToEdit(newComponent);
+    setComponentToEdit(newComponent); // Open edit dialog for the new component
     setIsEditModalOpen(true);
     setIsPropertiesSidebarOpen(false);
-    toast({ title: "Komponente hinzugefügt", description: `${newLabel} (${type}) wurde der Arbeitsfläche hinzugefügt.` });
+    toast({ title: "Komponente hinzugefügt", description: `${newLabel} (${paletteItem.name}) wurde der Arbeitsfläche hinzugefügt.` });
   };
 
   const confirmDelete = (type: 'component' | 'connection', id: string) => {
@@ -248,6 +268,7 @@ export default function CircuitCraftPage() {
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
+    const componentLabel = components.find(c=>c.id === deleteTarget.id)?.label;
     if (deleteTarget.type === 'component') {
       setComponents(prev => prev.filter(comp => comp.id !== deleteTarget.id));
       setConnections(prev => prev.filter(conn => conn.startComponentId !== deleteTarget.id && conn.endComponentId !== deleteTarget.id));
@@ -256,7 +277,7 @@ export default function CircuitCraftPage() {
         setSelectedComponentForSidebar(null);
         setIsPropertiesSidebarOpen(false);
       }
-       toast({ title: "Komponente gelöscht", description: `Komponente ${deleteTarget.id} entfernt.` });
+       toast({ title: "Komponente gelöscht", description: `Komponente "${componentLabel || deleteTarget.id}" entfernt.` });
     } else if (deleteTarget.type === 'connection') {
       setConnections(prev => prev.filter(conn => conn.id !== deleteTarget.id));
       toast({ title: "Verbindung gelöscht", description: `Verbindung ${deleteTarget.id} entfernt.` });
@@ -322,7 +343,7 @@ export default function CircuitCraftPage() {
             <AccordionContent className="text-sm text-muted-foreground space-y-1 pt-2">
               <p><strong>Ziehen:</strong> Komponenten verschieben.</p>
               <p><strong>Verbinden:</strong> Blauen Anschlusspunkt klicken, dann Zielpunkt klicken.</p>
-              <p><strong>Schalten:</strong> Auf Schalter (NO/NC) klicken, um Zustand zu ändern.</p>
+              <p><strong>Schalten:</strong> Auf Schalter (NO/NC) klicken, um Zustand zu ändern (wenn unterstützt).</p>
               <p><strong>Bearbeiten:</strong> Doppelklick auf Komponente für Details (Modal).</p>
               <p><strong>Details:</strong> Klick auf Komponente öffnet rechte Seitenleiste.</p>
               <p><strong>Löschen:</strong> Komponente über Seitenleiste, Verbindung per Rechtsklick.</p>
@@ -331,10 +352,11 @@ export default function CircuitCraftPage() {
         </Accordion>
       </div>
 
-      {isPropertiesSidebarOpen && (
+      {isPropertiesSidebarOpen && selectedComponentForSidebar && ( // ensure component is not null
         <div className={`transition-all duration-300 ease-in-out ${isPropertiesSidebarOpen ? 'w-72' : 'w-0'} overflow-hidden shrink-0`}>
              <PropertiesSidebar
                 component={selectedComponentForSidebar}
+                paletteComponent={getPaletteComponentById(selectedComponentForSidebar.firebaseComponentId)}
                 onClose={() => setIsPropertiesSidebarOpen(false)}
                 onUpdateComponent={handleUpdateComponentFromSidebar}
                 onDeleteComponent={(id) => confirmDelete('component', id)}
@@ -346,6 +368,7 @@ export default function CircuitCraftPage() {
       {componentToEdit && (
         <ComponentEditDialog
           component={componentToEdit}
+          paletteComponent={getPaletteComponentById(componentToEdit.firebaseComponentId)}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleSaveComponentChanges}
