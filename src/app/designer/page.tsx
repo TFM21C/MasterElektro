@@ -256,9 +256,9 @@ const DesignerPageContent: React.FC = () => {
       label: newLabel,
       state: definition?.initialState ? { ...definition.initialState } : undefined,
       displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
-      scale: 1.0, // Initialize scale to 1.0
-      width: null, // Initialize width to null
-      height: null, // Initialize height to null
+      scale: 1.0, 
+      width: null, 
+      height: null, 
     };
     setComponents(prev => [...prev, newComponent]);
     setComponentToEdit(newComponent); 
@@ -343,7 +343,7 @@ const DesignerPageContent: React.FC = () => {
             currentMouseSvgCoords={currentMouseSvgCoords}
             getAbsolutePinCoordinates={getAbsolutePinCoordinates}
             onMouseDownComponent={handleMouseDownComponent}
-            onPinClick={onPinClick}
+            onPinClick={handlePinClick}
             onComponentClick={handleComponentClick}
             onConnectionContextMenu={handleConnectionContextMenu}
             width={canvasDimensions.width}
