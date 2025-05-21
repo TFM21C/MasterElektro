@@ -6,62 +6,58 @@ interface PaletteIconProps {
 
 const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
   let iconContent: JSX.Element | null = null;
-  const viewBox = "0 0 40 40"; // Fixed for all icons
-  const paletteStrokeWidth = 2; // Prominent stroke width
+  const viewBox = "0 0 40 40";
+  const paletteStrokeWidth = 2; 
   const symbolStrokeColor = "black";
-  const symbolFillColor = "white"; // Fill for closed shapes like circles
+  const symbolFillColor = "white";
 
   switch (type) {
     case 'Schließer':
       iconContent = (
         <>
-          {/* Centered: Fixed contact part at x=25. Moving contact from x=15 to x=25. */}
-          {/* Vertical lines for fixed contact */}
-          <line x1="25" y1="5" x2="25" y2="15" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          <line x1="25" y1="25" x2="25" y2="35" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          {/* Diagonal line for normally open contact */}
-          <line x1="15" y1="15" x2="25" y2="25" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          {/* Fixed contact lines, almost full height */}
+          <line x1="20" y1="2" x2="20" y2="17.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <line x1="20" y1="22.5" x2="20" y2="38" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          {/* Diagonal line for normally open contact, wider span */}
+          <line x1="10" y1="17.5" x2="20" y2="22.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
       );
       break;
     case 'Öffner':
       iconContent = (
         <>
-          {/* Centered: Fixed contact part at x=15. Moving contact related point at x=25. */}
-          {/* Vertical lines for fixed contact */}
-          <line x1="15" y1="5" x2="15" y2="15" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          <line x1="15" y1="25" x2="15" y2="35" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          {/* "Nose" - horizontal line for normally closed contact */}
-          <line x1="15" y1="15" x2="25" y2="15" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          {/* Fixed contact lines, almost full height */}
+          <line x1="20" y1="2" x2="20" y2="17.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <line x1="20" y1="22.5" x2="20" y2="38" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          {/* "Nose" - horizontal line for normally closed contact, wider span */}
+          <line x1="20" y1="17.5" x2="30" y2="17.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
           {/* Diagonal line for normally closed contact */}
-          <line x1="25" y1="15" x2="15" y2="25" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <line x1="30" y1="17.5" x2="20" y2="22.5" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
       );
       break;
     case 'Motor':
       iconContent = (
         <>
-          <circle cx="20" cy="20" r="16" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
         </>
       );
       break;
     case 'Lampe':
       iconContent = (
         <>
-          <circle cx="20" cy="20" r="16" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
-          <line x1="10" y1="10" x2="30" y2="30" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          <line x1="10" y1="30" x2="30" y2="10" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <line x1="8" y1="8" x2="32" y2="32" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <line x1="8" y1="32" x2="32" y2="8" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
       );
       break;
     default:
-      // Optionally render a placeholder or return null for unhandled types
       return null; 
   }
 
   return (
     <svg width="40" height="40" viewBox={viewBox} className="mb-1 bg-white rounded">
-      {/* SVG content is drawn directly, no further <g> transform needed for centering if coordinates are absolute to viewBox */}
       {iconContent}
     </svg>
   );
