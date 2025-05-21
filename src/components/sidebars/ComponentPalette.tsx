@@ -45,11 +45,15 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
             <Button
               key={type}
               onClick={() => onAddComponent(type)}
-              variant="default"
-              className="w-full h-24 py-2 px-2 bg-gray-900 text-white hover:bg-gray-700 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border border-gray-700"
+              variant="outline" // Changed variant for a base style
+              className="w-full h-24 p-2 bg-card hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border-border"
             >
               <PaletteIcon type={type} />
-              {isOpen && <span className="mt-1.5 text-sm text-center leading-snug">{componentLabels[type]}</span>}
+              {isOpen && (
+                <span className="mt-1.5 px-3 py-1 bg-gray-900 text-white rounded-md text-xs font-medium text-center w-auto inline-block">
+                  {componentLabels[type]}
+                </span>
+              )}
             </Button>
           ))}
         </div>
