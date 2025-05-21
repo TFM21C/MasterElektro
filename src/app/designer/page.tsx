@@ -83,107 +83,6 @@ const DesignerPageContent: React.FC = () => {
     };
   }, [components]);
 
-  const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
-    if (isSimulating) {
-      handleComponentMouseDownInSim(id);
-      return;
-    }
-    const component = components.find(c => c.id === id);
-    if (component && svgRef.current) {
-      setDraggingComponentId(id);
-      const CTM = svgRef.current.getScreenCTM();
-      if (CTM) {
-        const svgPoint = svgRef.current.createSVGPoint();
-        svgPoint.x = e.clientX;
-        svgPoint.y = e.clientY;
-        const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
-        setOffset({
-          x: pointInSvg.x - component.x,
-          y: pointInSvg.y - component.y,
-        });
-      }
-    }
-  };
-  
-  const handleComponentMouseUpInSim = useCallback(() => {
-    if (pressedComponentId) {
-        const component = components.find(c => c.id === pressedComponentId);
-        const paletteComp = component ? getPaletteComponentById(component.firebaseComponentId) : null;
-        const simConfig = paletteComp?.simulation;
-
-        if (component && simConfig && simConfig.controlLogic === 'toggle_on_press') {
-            setSimulatedComponentStates(prev => ({
-                ...prev,
-                [component.id]: {
-                    ...prev[component.id],
-                    currentContactState: { ...(simConfig.initialContactState || {}) }
-                }
-            }));
-        }
-        setPressedComponentId(null);
-        if(simConfig?.interactable) runSimulationStep();
-    }
-  }, [pressedComponentId, components, setSimulatedComponentStates, runSimulationStep]); 
-
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!svgRef.current) return;
-    const CTM = svgRef.current.getScreenCTM();
-    if (!CTM) return;
-
-    const svgPoint = svgRef.current.createSVGPoint();
-    svgPoint.x = e.clientX;
-    svgPoint.y = e.clientY;
-    const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
-    
-    setCurrentMouseSvgCoords(pointInSvg);
-
-    if (draggingComponentId && !isSimulating) {
-      setComponents(prevComponents =>
-        prevComponents.map(comp =>
-          comp.id === draggingComponentId
-            ? { ...comp, x: pointInSvg.x - offset.x, y: pointInSvg.y - offset.y }
-            : comp
-        )
-      );
-    }
-  }, [draggingComponentId, offset, isSimulating]);
-
-  const handleMouseUpGlobal = useCallback(() => {
-    if (isSimulating) {
-      handleComponentMouseUpInSim();
-    }
-    setDraggingComponentId(null);
-  }, [isSimulating, handleComponentMouseUpInSim]);
-
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUpGlobal); 
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUpGlobal); 
-    };
-  }, [handleMouseMove, handleMouseUpGlobal]); 
-  
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        setCanvasDimensions({ width: Math.max(width, 300), height: Math.max(height - 50, 300) });
-      }
-    });
-
-    if (canvasContainerRef.current) {
-      resizeObserver.observe(canvasContainerRef.current);
-    }
-
-    return () => {
-      if (canvasContainerRef.current) {
-        resizeObserver.unobserve(canvasContainerRef.current);
-      }
-    };
-  }, []);
-
   const runSimulationStep = useCallback(() => {
     if (!isSimulating) return;
 
@@ -340,6 +239,105 @@ const DesignerPageContent: React.FC = () => {
 
   }, [isSimulating, components, connections, simulatedComponentStates, simulatedConnectionStates]);
 
+  const handleComponentMouseUpInSim = useCallback(() => {
+    if (pressedComponentId) {
+        const component = components.find(c => c.id === pressedComponentId);
+        const paletteComp = component ? getPaletteComponentById(component.firebaseComponentId) : null;
+        const simConfig = paletteComp?.simulation;
+
+        if (component && simConfig && simConfig.controlLogic === 'toggle_on_press') {
+            setSimulatedComponentStates(prev => ({
+                ...prev,
+                [component.id]: {
+                    ...prev[component.id],
+                    currentContactState: { ...(simConfig.initialContactState || {}) }
+                }
+            }));
+        }
+        setPressedComponentId(null);
+        if(simConfig?.interactable) runSimulationStep();
+    }
+  }, [pressedComponentId, components, setSimulatedComponentStates, runSimulationStep]); 
+
+  const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
+    if (isSimulating) {
+      handleComponentMouseDownInSim(id);
+      return;
+    }
+    const component = components.find(c => c.id === id);
+    if (component && svgRef.current) {
+      setDraggingComponentId(id);
+      const CTM = svgRef.current.getScreenCTM();
+      if (CTM) {
+        const svgPoint = svgRef.current.createSVGPoint();
+        svgPoint.x = e.clientX;
+        svgPoint.y = e.clientY;
+        const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
+        setOffset({
+          x: pointInSvg.x - component.x,
+          y: pointInSvg.y - component.y,
+        });
+      }
+    }
+  };
+  
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!svgRef.current) return;
+    const CTM = svgRef.current.getScreenCTM();
+    if (!CTM) return;
+
+    const svgPoint = svgRef.current.createSVGPoint();
+    svgPoint.x = e.clientX;
+    svgPoint.y = e.clientY;
+    const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
+    
+    setCurrentMouseSvgCoords(pointInSvg);
+
+    if (draggingComponentId && !isSimulating) {
+      setComponents(prevComponents =>
+        prevComponents.map(comp =>
+          comp.id === draggingComponentId
+            ? { ...comp, x: pointInSvg.x - offset.x, y: pointInSvg.y - offset.y }
+            : comp
+        )
+      );
+    }
+  }, [draggingComponentId, offset, isSimulating]);
+
+  const handleMouseUpGlobal = useCallback(() => {
+    if (isSimulating) {
+      handleComponentMouseUpInSim();
+    }
+    setDraggingComponentId(null);
+  }, [isSimulating, handleComponentMouseUpInSim]);
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUpGlobal); 
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUpGlobal); 
+    };
+  }, [handleMouseMove, handleMouseUpGlobal]); 
+  
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        setCanvasDimensions({ width: Math.max(width, 300), height: Math.max(height - 50, 300) });
+      }
+    });
+
+    if (canvasContainerRef.current) {
+      resizeObserver.observe(canvasContainerRef.current);
+    }
+
+    return () => {
+      if (canvasContainerRef.current) {
+        resizeObserver.unobserve(canvasContainerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isSimulating) {
@@ -645,8 +643,12 @@ const DesignerPageContent: React.FC = () => {
   };
 
   const handleExportSVG = () => {
-    exportSvg(svgRef.current, `${projectName || 'CircuitCraft-Export'}.svg`);
-    toast({ title: "SVG Export gestartet", description: "Die SVG-Datei wird heruntergeladen." });
+    if (svgRef.current) {
+      exportSvg(svgRef.current, `${projectName || 'CircuitCraft-Export'}.svg`);
+      toast({ title: "SVG Export gestartet", description: "Die SVG-Datei wird heruntergeladen." });
+    } else {
+      toast({ title: "SVG Export fehlgeschlagen", description: "Das SVG-Element konnte nicht gefunden werden.", variant: "destructive"});
+    }
   };
 
   return (
@@ -781,3 +783,4 @@ export default function DesignerPage() {
 }
 
     
+
