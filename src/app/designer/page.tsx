@@ -57,12 +57,14 @@ const DesignerPageContent: React.FC = () => {
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
 
-  const filteredPaletteComponents = MOCK_PALETTE_COMPONENTS.filter(comp => {
-    if (projectType === "Installationsschaltplan") {
-      return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
-    }
-    return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
-  });
+  const filteredPaletteComponents = React.useMemo(() => {
+    return MOCK_PALETTE_COMPONENTS.filter(comp => {
+      if (projectType === "Installationsschaltplan") {
+        return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
+      }
+      return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
+    });
+  }, [projectType]);
 
   // ## START REFACTORED SIMULATION LOGIC ##
 
@@ -71,6 +73,7 @@ const DesignerPageContent: React.FC = () => {
 
     let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
 
+<<<<<<< HEAD
     // 1. Update contact states based on controlling coils (Schütze, Zeitrelais)
     components.forEach(comp => {
         const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
@@ -88,6 +91,16 @@ const DesignerPageContent: React.FC = () => {
 
             if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
                 newSimCompStates[comp.id].currentContactState = { ...targetState };
+=======
+    Object.keys(newSimConnStates).forEach(id => newSimConnStates[id].isConducting = false);
+    Object.keys(newSimCompStates).forEach(compId => {
+        const comp = components.find(c => c.id === compId);
+        const paletteComp = comp ? getPaletteComponentById(comp.firebaseComponentId) : null;
+        const simConfig = paletteComp?.simulation;
+        if (simConfig?.controlLogic === 'visualize_energized' || simConfig?.controlLogic === 'energize_coil' || simConfig?.controlLogic === 'timer_on_delay') {
+            if (!newSimCompStates[compId].timerActive) { 
+                newSimCompStates[compId].isEnergized = false;
+>>>>>>> 0d96bdc (I see this error with the app, reported by NextJS, please fix it. The er)
             }
         }
     });
@@ -101,10 +114,88 @@ const DesignerPageContent: React.FC = () => {
         const simConfig = paletteComp?.simulation;
         if (!simConfig) return;
 
+<<<<<<< HEAD
         const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
         
         if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
             newSimCompStates[comp.id].isEnergized = isNowEnergized;
+=======
+        const poweredPins = new Set<string>(); 
+
+        components.forEach(comp => {
+            const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+            if (paletteComp?.type === '24V') { 
+                const pins = Object.keys(COMPONENT_DEFINITIONS[comp.type]?.pins || {});
+                pins.forEach(pinName => poweredPins.add(`${comp.id}/${pinName}`));
+            }
+        });
+
+        let propagationChanged = true;
+        let propagationIterations = 0;
+        const maxPropagationIterations = connections.length * 2 + 10;
+
+        while(propagationChanged && propagationIterations < maxPropagationIterations){
+            propagationChanged = false;
+            propagationIterations++;
+
+            connections.forEach(conn => {
+                const startPinKey = `${conn.startComponentId}/${conn.startPinName}`;
+                const endPinKey = `${conn.endComponentId}/${conn.endPinName}`;
+
+                let startPinIsPowered = poweredPins.has(startPinKey);
+                const startComp = components.find(c => c.id === conn.startComponentId);
+                if(startComp){
+                    const startCompState = newSimCompStates[startComp.id];
+                    const startPinDef = COMPONENT_DEFINITIONS[startComp.type]?.pins[conn.startPinName];
+                    if(startPinIsPowered && startCompState?.currentContactState && startPinDef){
+                        if (startCompState.currentContactState[conn.startPinName] === 'open') {
+                            startPinIsPowered = false;
+                        }
+                    }
+                }
+
+
+                let endPinIsPowered = poweredPins.has(endPinKey);
+                const endComp = components.find(c => c.id === conn.endComponentId);
+                 if(endComp){
+                    const endCompState = newSimCompStates[endComp.id];
+                    const endPinDef = COMPONENT_DEFINITIONS[endComp.type]?.pins[conn.endPinName];
+                     if(endPinIsPowered && endCompState?.currentContactState && endPinDef){
+                        if (endCompState.currentContactState[conn.endPinName] === 'open') {
+                           endPinIsPowered = false;
+                        }
+                    }
+                }
+
+
+                if (startPinIsPowered && !endPinIsPowered) { 
+                    if (!newSimConnStates[conn.id].isConducting) {
+                        newSimConnStates[conn.id].isConducting = true;
+                        changedInIteration = true;
+                    }
+                    if (!poweredPins.has(endPinKey)) {
+                        poweredPins.add(endPinKey);
+                        propagationChanged = true;
+                        changedInIteration = true;
+                    }
+                } else if (endPinIsPowered && !startPinIsPowered) { 
+                     if (!newSimConnStates[conn.id].isConducting) {
+                        newSimConnStates[conn.id].isConducting = true;
+                        changedInIteration = true;
+                    }
+                    if (!poweredPins.has(startPinKey)) {
+                        poweredPins.add(startPinKey);
+                        propagationChanged = true;
+                        changedInIteration = true;
+                    }
+                } else if (startPinIsPowered && endPinIsPowered) { 
+                     if (!newSimConnStates[conn.id].isConducting) {
+                        newSimConnStates[conn.id].isConducting = true;
+                        changedInIteration = true;
+                    }
+                }
+            });
+>>>>>>> 0d96bdc (I see this error with the app, reported by NextJS, please fix it. The er)
         }
 
         // Timer logic can be triggered here if needed
@@ -221,7 +312,7 @@ const DesignerPageContent: React.FC = () => {
         setPressedComponentId(null);
         if(simConfig?.interactable) runSimulationStep(); 
     }
-  }, [pressedComponentId, components, runSimulationStep]); 
+  }, [pressedComponentId, components, runSimulationStep, simulatedComponentStates]); 
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -768,3 +859,5 @@ export default function DesignerPage() {
     </Suspense>
   );
 }
+
+    
