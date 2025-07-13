@@ -30,6 +30,7 @@ const DesignerPageContent: React.FC = () => {
   const [components, setComponents] = useState<ElectricalComponent[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [draggingComponentId, setDraggingComponentId] = useState<string | null>(null);
+  const [draggingWaypoint, setDraggingWaypoint] = useState<{connectionId: string, waypointIndex: number} | null>(null);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const [connectingPin, setConnectingPin] = useState<{ componentId: string; pinName: string, coords: Point } | null>(null);
   const [currentMouseSvgCoords, setCurrentMouseSvgCoords] = useState<Point | null>(null);
@@ -39,7 +40,7 @@ const DesignerPageContent: React.FC = () => {
   const [componentToEdit, setComponentToEdit] = useState<ElectricalComponent | null>(null);
 
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'component' | 'connection'; id: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'component' | 'connection' | 'waypoint'; id: string, waypointIndex?: number } | null>(null);
 
   const [selectedComponentForSidebar, setSelectedComponentForSidebar] = useState<ElectricalComponent | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
@@ -57,14 +58,12 @@ const DesignerPageContent: React.FC = () => {
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
 
-  const filteredPaletteComponents = React.useMemo(() => {
-    return MOCK_PALETTE_COMPONENTS.filter(comp => {
-      if (projectType === "Installationsschaltplan") {
-        return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
-      }
-      return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
-    });
-  }, [projectType]);
+  const filteredPaletteComponents = MOCK_PALETTE_COMPONENTS.filter(comp => {
+    if (projectType === "Installationsschaltplan") {
+      return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
+    }
+    return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
+  });
 
   // ## START REFACTORED SIMULATION LOGIC ##
 
@@ -77,15 +76,15 @@ const DesignerPageContent: React.FC = () => {
     components.forEach(comp => {
         const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
         if (paletteComp?.simulation?.controlledBy === 'label_match') {
-            const controllingCoils = components.filter(c =>
-                c.label === comp.label &&
+            const controllingCoils = components.filter(c => 
+                c.label === comp.label && 
                 getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
             );
-
+            
             const isEnergized = controllingCoils.some(coil => simulatedComponentStates[coil.id]?.isEnergized);
-
-            const targetState = isEnergized
-                ? paletteComp.simulation.outputPinStateOnEnergized
+            
+            const targetState = isEnergized 
+                ? paletteComp.simulation.outputPinStateOnEnergized 
                 : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
 
             if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
@@ -104,12 +103,15 @@ const DesignerPageContent: React.FC = () => {
         if (!simConfig) return;
 
         const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
-
+        
         if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
             newSimCompStates[comp.id].isEnergized = isNowEnergized;
         }
-    });
 
+        // Timer logic can be triggered here if needed
+        // ... (future implementation for timers)
+    });
+    
     // 4. Update connection conducting states
     const newSimConnStates = updateConnectionStates(energizedPins);
 
@@ -151,7 +153,7 @@ const DesignerPageContent: React.FC = () => {
 
               const startConducts = startState?.currentContactState?.[conn.startPinName] !== 'open';
               const endConducts = endState?.currentContactState?.[conn.endPinName] !== 'open';
-
+              
               const startEnergized = energizedPins.has(startKey);
               const endEnergized = energizedPins.has(endKey);
 
@@ -165,7 +167,7 @@ const DesignerPageContent: React.FC = () => {
               }
           });
       }
-
+      
       energizedPins.forEach(pinKey => {
           const [componentId] = pinKey.split('/');
           energizedComponents.add(componentId);
@@ -220,7 +222,7 @@ const DesignerPageContent: React.FC = () => {
         setPressedComponentId(null);
         if(simConfig?.interactable) runSimulationStep(); 
     }
-  }, [pressedComponentId, components, runSimulationStep, simulatedComponentStates]); 
+  }, [pressedComponentId, components, runSimulationStep]); 
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -244,35 +246,50 @@ const DesignerPageContent: React.FC = () => {
       }
     }
   };
+  
+  const handleWaypointMouseDown = (connectionId: string, waypointIndex: number) => {
+      if (isSimulating) return;
+      setDraggingWaypoint({connectionId, waypointIndex});
+  }
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!svgRef.current) return;
     const CTM = svgRef.current.getScreenCTM();
     if (!CTM) return;
 
-    const svgPoint = svgRef.current.createSVGPoint();
-    svgPoint.x = e.clientX;
-    svgPoint.y = e.clientY;
-    const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
-
-    setCurrentMouseSvgCoords(pointInSvg);
+    const pointInSvg = svgRef.current.createSVGPoint();
+    pointInSvg.x = e.clientX;
+    pointInSvg.y = e.clientY;
+    const { x, y } = pointInSvg.matrixTransform(CTM.inverse());
+    
+    setCurrentMouseSvgCoords({x, y});
 
     if (draggingComponentId && !isSimulating) {
       setComponents(prevComponents =>
         prevComponents.map(comp =>
           comp.id === draggingComponentId
-            ? { ...comp, x: pointInSvg.x - offset.x, y: pointInSvg.y - offset.y }
+            ? { ...comp, x: x - offset.x, y: y - offset.y }
             : comp
         )
       );
+    } else if (draggingWaypoint) {
+        setConnections(prev => prev.map(conn => {
+            if (conn.id === draggingWaypoint.connectionId) {
+                const newWaypoints = [...(conn.waypoints || [])];
+                newWaypoints[draggingWaypoint.waypointIndex] = { x, y };
+                return { ...conn, waypoints: newWaypoints };
+            }
+            return conn;
+        }));
     }
-  }, [draggingComponentId, offset, isSimulating]);
+  }, [draggingComponentId, offset, isSimulating, draggingWaypoint]);
 
   const handleMouseUpGlobal = useCallback(() => {
     if (isSimulating) {
       handleComponentMouseUpInSim();
     }
     setDraggingComponentId(null);
+    setDraggingWaypoint(null);
   }, [isSimulating, handleComponentMouseUpInSim]);
 
 
@@ -465,8 +482,42 @@ const DesignerPageContent: React.FC = () => {
   };
 
 
-  const handleConnectionClick = (connectionId: string) => {
+  const handleConnectionClick = (connectionId: string, clickCoords: Point) => {
     if (isSimulating) return;
+
+    setConnections(prev => prev.map(conn => {
+        if (conn.id === connectionId) {
+            const start = getAbsolutePinCoordinates(conn.startComponentId, conn.startPinName);
+            const end = getAbsolutePinCoordinates(conn.endComponentId, conn.endPinName);
+            if (!start || !end) return conn;
+
+            const existingWaypoints = conn.waypoints || [];
+            const segments = [start, ...existingWaypoints, end];
+            let closestSegmentIndex = 0;
+            let minDistance = Infinity;
+
+            for (let i = 0; i < segments.length - 1; i++) {
+                const p1 = segments[i];
+                const p2 = segments[i+1];
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const lenSq = dx * dx + dy * dy;
+                const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((clickCoords.x - p1.x) * dx + (clickCoords.y - p1.y) * dy) / lenSq));
+                const closestPoint = { x: p1.x + t * dx, y: p1.y + t * dy };
+                const distSq = (clickCoords.x - closestPoint.x)**2 + (clickCoords.y - closestPoint.y)**2;
+                
+                if (distSq < minDistance) {
+                    minDistance = distSq;
+                    closestSegmentIndex = i;
+                }
+            }
+            const newWaypoints = [...existingWaypoints];
+            newWaypoints.splice(closestSegmentIndex, 0, clickCoords);
+            return { ...conn, waypoints: newWaypoints };
+        }
+        return conn;
+    }));
+
     setSelectedConnectionId(connectionId);
     setSelectedComponentForSidebar(null);
     setIsPropertiesSidebarOpen(true);
@@ -581,12 +632,12 @@ const DesignerPageContent: React.FC = () => {
     setIsPropertiesSidebarOpen(true);
   };
 
-  const confirmDelete = (type: 'component' | 'connection', id: string) => {
+  const confirmDelete = (type: 'component' | 'connection' | 'waypoint', id: string, waypointIndex?: number) => {
     if (isSimulating) {
         toast({ title: "Aktion nicht erlaubt", description: "Elemente können nicht während der Simulation gelöscht werden.", variant: "destructive" });
         return;
     }
-    setDeleteTarget({ type, id });
+    setDeleteTarget({ type, id, waypointIndex });
     setIsConfirmDeleteModalOpen(true);
   };
 
@@ -610,6 +661,17 @@ const DesignerPageContent: React.FC = () => {
         setIsPropertiesSidebarOpen(false);
       }
       toast({ title: "Verbindung gelöscht", description: `Verbindung ${deleteTarget.id} entfernt.` });
+    } else if (deleteTarget.type === 'waypoint') {
+        setConnections(prev => prev.map(conn => {
+            if (conn.id === deleteTarget.id) {
+                const newWaypoints = [...(conn.waypoints || [])];
+                if(deleteTarget.waypointIndex !== undefined) {
+                    newWaypoints.splice(deleteTarget.waypointIndex, 1);
+                }
+                return { ...conn, waypoints: newWaypoints };
+            }
+            return conn;
+        }));
     }
     setIsConfirmDeleteModalOpen(false);
     setDeleteTarget(null);
@@ -684,6 +746,8 @@ const DesignerPageContent: React.FC = () => {
             onPinClick={handlePinClick}
             onComponentClick={handleComponentClick}
             onConnectionClick={handleConnectionClick}
+            onWaypointMouseDown={handleWaypointMouseDown}
+            onWaypointDoubleClick={(connId, index) => confirmDelete('waypoint', connId, index)}
             width={canvasDimensions.width}
             height={canvasDimensions.height}
             isSimulating={isSimulating}
@@ -700,13 +764,12 @@ const DesignerPageContent: React.FC = () => {
                 <Info className="mr-2 h-4 w-4" /> Informationen & Bedienung
             </AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground space-y-1 pt-2">
-              <p><strong>Ziehen:</strong> Komponenten verschieben (nur im Bearbeitungsmodus).</p>
-              <p><strong>Verbinden:</strong> Blauen Anschlusspunkt klicken, dann Zielpunkt klicken (nur im Bearbeitungsmodus).</p>
-              <p><strong>Verbindung auswählen/löschen:</strong> Auf Verbindungslinie klicken, um Details rechts zu sehen und zu löschen (nur Bearbeitungsmodus).</p>
-              <p><strong>Schalten (Simulation):</strong> Auf Schalter/Taster klicken, um Zustand zu ändern (wenn Simulation aktiv).</p>
-              <p><strong>Bearbeiten:</strong> Doppelklick auf Komponente für Details (Modal, nur Bearbeitungsmodus).</p>
-              <p><strong>Details:</strong> Klick auf Komponente öffnet rechte Seitenleiste (nur Bearbeitungsmodus).</p>
-              <p><strong>Löschen:</strong> Komponente über Seitenleiste, Verbindung über Seitenleiste (nach Auswahl, nur Bearbeitungsmodus).</p>
+              <p><strong>Ziehen:</strong> Komponenten oder Wegpunkte verschieben (nur im Bearbeitungsmodus).</p>
+              <p><strong>Verbinden:</strong> Blauen Anschlusspunkt klicken, dann Zielpunkt klicken.</p>
+              <p><strong>Wegpunkt hinzufügen:</strong> Auf eine Verbindungslinie klicken.</p>
+              <p><strong>Wegpunkt löschen:</strong> Doppelklick auf einen Wegpunkt.</p>
+              <p><strong>Schalten (Simulation):</strong> Auf Schalter/Taster klicken, um Zustand zu ändern.</p>
+              <p><strong>Bearbeiten/Details:</strong> Klick auf Komponente öffnet rechte Seitenleiste, Doppelklick für Details.</p>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -746,7 +809,7 @@ const DesignerPageContent: React.FC = () => {
       {deleteTarget && (
         <ConfirmDeleteDialog
           isOpen={isConfirmDeleteModalOpen}
-          message={`Möchten Sie ${deleteTarget.type === 'component' ? `die Komponente "${components.find(c=>c.id === deleteTarget.id)?.label || deleteTarget.id}"` : `die Verbindung "${connections.find(c=>c.id === deleteTarget.id)?.id || deleteTarget.id}"`} wirklich löschen?`}
+          message={`Möchten Sie ${deleteTarget.type === 'component' ? `die Komponente "${components.find(c=>c.id === deleteTarget.id)?.label || deleteTarget.id}"` : (deleteTarget.type === 'waypoint' ? 'diesen Wegpunkt' : `die Verbindung "${connections.find(c=>c.id === deleteTarget.id)?.id || deleteTarget.id}"`)} wirklich löschen?`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setIsConfirmDeleteModalOpen(false)}
         />
@@ -767,5 +830,3 @@ export default function DesignerPage() {
     </Suspense>
   );
 }
-
-    
