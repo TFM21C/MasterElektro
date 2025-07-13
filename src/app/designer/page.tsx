@@ -58,12 +58,14 @@ const DesignerPageContent: React.FC = () => {
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
 
-  const filteredPaletteComponents = MOCK_PALETTE_COMPONENTS.filter(comp => {
-    if (projectType === "Installationsschaltplan") {
-      return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
-    }
-    return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
-  });
+  const filteredPaletteComponents = React.useMemo(() => {
+    return MOCK_PALETTE_COMPONENTS.filter(comp => {
+      if (projectType === "Installationsschaltplan") {
+        return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
+      }
+      return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
+    });
+  }, [projectType]);
 
   const runSimulationStep = useCallback(() => {
     let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
