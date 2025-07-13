@@ -13,7 +13,7 @@ export function exportSvg(svgElement: SVGSVGElement | null, fileName: string): v
   }
   
   // Find existing style or create one
-  let styleElement = svgClone.querySelector('style');
+  let styleElement: SVGStyleElement | null = svgClone.querySelector('style') as SVGStyleElement | null;
   if (!styleElement) {
     styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
     svgClone.insertBefore(styleElement, svgClone.firstChild); // Prepend to ensure styles are applied
@@ -29,7 +29,9 @@ export function exportSvg(svgElement: SVGSVGElement | null, fileName: string): v
     .font-bold { font-weight: bold; }
   `;
   // Append global styles to existing or new style element
-  styleElement.textContent += globalStyles;
+  if (styleElement) {
+    styleElement.textContent += globalStyles;
+  }
 
 
   const svgData = new XMLSerializer().serializeToString(svgClone);
