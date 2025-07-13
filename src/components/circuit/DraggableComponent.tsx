@@ -1,19 +1,23 @@
 
 import React from 'react';
 import { COMPONENT_DEFINITIONS } from '@/config/component-definitions';
-import type { ElectricalComponent, Point } from '@/types/circuit';
+import type { ElectricalComponent, Point, SimulatedComponentState } from '@/types/circuit';
 
 interface DraggableComponentProps {
   component: ElectricalComponent;
   onMouseDown: (e: React.MouseEvent<SVGGElement>, id: string) => void;
+  onMouseUp: (id: string) => void;
   onPinClick: (componentId: string, pinName: string, pinCoords: Point) => void;
   onComponentClick: (id: string, isDoubleClick?: boolean) => void;
   connectingPin: { componentId: string; pinName: string } | null;
+  isSimulating?: boolean;
+  simulatedState?: SimulatedComponentState;
 }
 
 const DraggableComponent: React.FC<DraggableComponentProps> = ({
   component,
   onMouseDown,
+  onMouseUp,
   onPinClick,
   onComponentClick,
   connectingPin,
@@ -33,6 +37,10 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
     }
   };
 
+  const handleComponentMouseUp = () => {
+    onMouseUp(component.id);
+  };
+
   const handleComponentDoubleClick = (e: React.MouseEvent<SVGGElement>) => {
     if (!(e.target instanceof SVGElement && e.target.classList.contains('pin-circle'))) {
       onComponentClick(component.id, true);
@@ -45,6 +53,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
     <g
       transform={`translate(${component.x}, ${component.y}) scale(${scale})`}
       onMouseDown={handleComponentMouseDown}
+      onMouseUp={handleComponentMouseUp}
       onClick={handleComponentClick}
       onDoubleClick={handleComponentDoubleClick}
       style={{ cursor: 'grab' }}
