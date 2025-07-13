@@ -65,14 +65,9 @@ const DesignerPageContent: React.FC = () => {
     return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
   });
 
-  // ## START REFACTORED SIMULATION LOGIC ##
-
   const runSimulationStep = useCallback(() => {
-    if (!isSimulating) return;
-
     let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
 
-    // 1. Update contact states based on controlling coils (Schütze, Zeitrelais)
     components.forEach(comp => {
         const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
         if (paletteComp?.simulation?.controlledBy === 'label_match') {
@@ -81,7 +76,7 @@ const DesignerPageContent: React.FC = () => {
                 getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
             );
             
-            const isEnergized = controllingCoils.some(coil => simulatedComponentStates[coil.id]?.isEnergized);
+            const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
             
             const targetState = isEnergized 
                 ? paletteComp.simulation.outputPinStateOnEnergized 
@@ -93,10 +88,8 @@ const DesignerPageContent: React.FC = () => {
         }
     });
 
-    // 2. Propagate power
-    const { energizedPins } = propagatePower(newSimCompStates);
+    const { energizedPins } = propagatePower(components, connections, newSimCompStates);
 
-    // 3. Update component energized status
     components.forEach(comp => {
         const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
         const simConfig = paletteComp?.simulation;
@@ -107,27 +100,25 @@ const DesignerPageContent: React.FC = () => {
         if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
             newSimCompStates[comp.id].isEnergized = isNowEnergized;
         }
-
-        // Timer logic can be triggered here if needed
-        // ... (future implementation for timers)
     });
     
-    // 4. Update connection conducting states
-    const newSimConnStates = updateConnectionStates(energizedPins);
+    const newSimConnStates = updateConnectionStates(connections, energizedPins);
 
     setSimulatedComponentStates(newSimCompStates);
     setSimulatedConnectionStates(newSimConnStates);
 
-  }, [isSimulating, components, connections, simulatedComponentStates]);
+  }, [simulatedComponentStates, components, connections]);
 
-
-  const propagatePower = (currentSimCompStates: typeof simulatedComponentStates) => {
+  const propagatePower = (
+    currentComponents: ElectricalComponent[],
+    currentConnections: Connection[],
+    currentSimCompStates: typeof simulatedComponentStates
+  ) => {
       const energizedPins = new Set<string>();
       const energizedComponents = new Set<string>();
       let changedInIteration = true;
 
-      // Initial power sources
-      components.forEach(comp => {
+      currentComponents.forEach(comp => {
           if (comp.type === '24V') {
               Object.keys(COMPONENT_DEFINITIONS[comp.type]?.pins || {}).forEach(pinName => {
                   energizedPins.add(`${comp.id}/${pinName}`);
@@ -135,16 +126,15 @@ const DesignerPageContent: React.FC = () => {
           }
       });
 
-      // Iteratively propagate power
       while (changedInIteration) {
           changedInIteration = false;
 
-          connections.forEach(conn => {
+          currentConnections.forEach(conn => {
               const startKey = `${conn.startComponentId}/${conn.startPinName}`;
               const endKey = `${conn.endComponentId}/${conn.endPinName}`;
 
-              const startComp = components.find(c => c.id === conn.startComponentId);
-              const endComp = components.find(c => c.id === conn.endComponentId);
+              const startComp = currentComponents.find(c => c.id === conn.startComponentId);
+              const endComp = currentComponents.find(c => c.id === conn.endComponentId);
 
               if (!startComp || !endComp) return;
 
@@ -176,16 +166,17 @@ const DesignerPageContent: React.FC = () => {
       return { energizedPins, energizedComponents };
   };
 
-  const updateConnectionStates = (energizedPins: Set<string>) => {
+  const updateConnectionStates = (
+      currentConnections: Connection[],
+      energizedPins: Set<string>
+  ) => {
       const newSimConnStates: { [key: string]: SimulatedConnectionState } = {};
-      connections.forEach(conn => {
+      currentConnections.forEach(conn => {
           const isConducting = energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`);
           newSimConnStates[conn.id] = { isConducting };
       });
       return newSimConnStates;
   };
-
-  // ## END REFACTORED SIMULATION LOGIC ##
 
 
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
@@ -220,9 +211,8 @@ const DesignerPageContent: React.FC = () => {
             }));
         }
         setPressedComponentId(null);
-        if(simConfig?.interactable) runSimulationStep(); 
     }
-  }, [pressedComponentId, components, runSimulationStep]); 
+  }, [pressedComponentId, components]); 
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -321,24 +311,11 @@ const DesignerPageContent: React.FC = () => {
     };
   }, []);
 
-
   useEffect(() => {
     if (isSimulating) {
       runSimulationStep();
-    } else {
-        activeTimerTimeouts.current.forEach(t => clearTimeout(t.timerId));
-        activeTimerTimeouts.current = [];
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSimulating, components, connections]); 
-
-  useEffect(() => {
-    if (isSimulating) {
-        runSimulationStep();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulatedComponentStates]); 
-
+  }, [isSimulating, components, connections, runSimulationStep]); 
 
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
