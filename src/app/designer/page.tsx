@@ -115,59 +115,62 @@ const DesignerPageContent: React.FC = () => {
   }, []);
 
   const runSimulationStep = useCallback(() => {
-    setSimulatedComponentStates(currentSimStates => {
-        let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
+    let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
 
-        components.forEach(comp => {
-            const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-            if (paletteComp?.simulation?.controlledBy === 'label_match') {
-                const controllingCoils = components.filter(c => 
-                    c.label === comp.label && 
-                    getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
-                );
-                
-                const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
-                
-                const targetState = isEnergized 
-                    ? paletteComp.simulation.outputPinStateOnEnergized 
-                    : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
-
-                if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
-                    newSimCompStates[comp.id].currentContactState = { ...targetState };
-                }
-            }
-        });
-
-        const { energizedPins } = propagatePower(components, connections, newSimCompStates);
-
-        components.forEach(comp => {
-            const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-            const simConfig = paletteComp?.simulation;
-            if (!simConfig) return;
-
-            const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
+    components.forEach(comp => {
+        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+        if (paletteComp?.simulation?.controlledBy === 'label_match') {
+            const controllingCoils = components.filter(c => 
+                c.label === comp.label && 
+                getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
+            );
             
-            if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
-                newSimCompStates[comp.id].isEnergized = isNowEnergized;
-            }
-        });
-        
-        const newSimConnStates = connections.reduce((acc, conn) => {
-            acc[conn.id] = { isConducting: energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`) };
-            return acc;
-        }, {} as { [key: string]: SimulatedConnectionState });
+            const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
+            
+            const targetState = isEnergized 
+                ? paletteComp.simulation.outputPinStateOnEnergized 
+                : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
 
-        setSimulatedConnectionStates(newSimConnStates);
-        
-        return newSimCompStates;
+            if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
+                newSimCompStates[comp.id].currentContactState = { ...targetState };
+            }
+        }
     });
-  }, [components, connections, propagatePower]);
+
+    const { energizedPins } = propagatePower(components, connections, newSimCompStates);
+
+    components.forEach(comp => {
+        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+        const simConfig = paletteComp?.simulation;
+        if (!simConfig) return;
+
+        const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
+        
+        if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
+            newSimCompStates[comp.id].isEnergized = isNowEnergized;
+        }
+    });
+    
+    const newSimConnStates = connections.reduce((acc, conn) => {
+        acc[conn.id] = { isConducting: energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`) };
+        return acc;
+    }, {} as { [key: string]: SimulatedConnectionState });
+
+    // *** THE CRITICAL FIX IS HERE ***
+    // Only update state if something has actually changed. This breaks the infinite loop.
+    if (JSON.stringify(newSimCompStates) !== JSON.stringify(simulatedComponentStates) || 
+        JSON.stringify(newSimConnStates) !== JSON.stringify(simulatedConnectionStates)) {
+      setSimulatedComponentStates(newSimCompStates);
+      setSimulatedConnectionStates(newSimConnStates);
+    }
+    
+  }, [components, connections, propagatePower, simulatedComponentStates, simulatedConnectionStates]);
 
   useEffect(() => {
     if (isSimulating) {
       runSimulationStep();
     }
-  }, [isSimulating, runSimulationStep]);
+  }, [isSimulating, runSimulationStep, simulatedComponentStates]);
 
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
     const component = components.find(c => c.id === componentId);
@@ -521,7 +524,7 @@ const DesignerPageContent: React.FC = () => {
             onComponentClick={handleComponentClick}
             onConnectionClick={handleConnectionClick}
             onWaypointMouseDown={handleWaypointMouseDown}
-            onWaypointDoubleClick={(connId, waypointIndex) => confirmDelete('waypoint', connId, waypointIndex)}
+            onWaypointDoubleClick={confirmDelete}
             width={canvasDimensions.width}
             height={canvasDimensions.height}
             isSimulating={isSimulating}
