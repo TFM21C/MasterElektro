@@ -167,7 +167,7 @@ const DesignerPageContent: React.FC = () => {
     if (isSimulating) {
       runSimulationStep();
     }
-  }, [isSimulating, runSimulationStep, simulatedComponentStates]);
+  }, [isSimulating, runSimulationStep]);
 
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
     const component = components.find(c => c.id === componentId);
