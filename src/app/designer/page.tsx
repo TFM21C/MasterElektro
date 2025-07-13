@@ -68,58 +68,61 @@ const DesignerPageContent: React.FC = () => {
   }, [projectType]);
 
   const runSimulationStep = useCallback(() => {
-    let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
+    setSimulatedComponentStates(currentSimStates => {
+        let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
 
-    components.forEach(comp => {
-        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-        if (paletteComp?.simulation?.controlledBy === 'label_match') {
-            const controllingCoils = components.filter(c => 
-                c.label === comp.label && 
-                getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
-            );
-            
-            const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
-            
-            const targetState = isEnergized 
-                ? paletteComp.simulation.outputPinStateOnEnergized 
-                : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
+        components.forEach(comp => {
+            const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+            if (paletteComp?.simulation?.controlledBy === 'label_match') {
+                const controllingCoils = components.filter(c => 
+                    c.label === comp.label && 
+                    getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
+                );
+                
+                const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
+                
+                const targetState = isEnergized 
+                    ? paletteComp.simulation.outputPinStateOnEnergized 
+                    : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
 
-            if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
-                newSimCompStates[comp.id].currentContactState = { ...targetState };
+                if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
+                    newSimCompStates[comp.id].currentContactState = { ...targetState };
+                }
             }
-        }
-    });
+        });
 
-    const { energizedPins } = propagatePower(components, connections, newSimCompStates);
+        const { energizedPins } = propagatePower(components, connections, newSimCompStates);
 
-    components.forEach(comp => {
-        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-        const simConfig = paletteComp?.simulation;
-        if (!simConfig) return;
+        components.forEach(comp => {
+            const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+            const simConfig = paletteComp?.simulation;
+            if (!simConfig) return;
 
-        const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
+            const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
+            
+            if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
+                newSimCompStates[comp.id].isEnergized = isNowEnergized;
+            }
+        });
         
-        if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
-            newSimCompStates[comp.id].isEnergized = isNowEnergized;
-        }
+        const newSimConnStates = connections.reduce((acc, conn) => {
+            acc[conn.id] = { isConducting: energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`) };
+            return acc;
+        }, {} as { [key: string]: SimulatedConnectionState });
+
+        setSimulatedConnectionStates(newSimConnStates);
+        
+        return newSimCompStates;
     });
-    
-    const newSimConnStates = updateConnectionStates(connections, energizedPins);
+  }, [components, connections]);
 
-    setSimulatedComponentStates(newSimCompStates);
-    setSimulatedConnectionStates(newSimConnStates);
-
-  }, [simulatedComponentStates, components, connections]);
-
-  const propagatePower = (
+  const propagatePower = useCallback((
     currentComponents: ElectricalComponent[],
     currentConnections: Connection[],
     currentSimCompStates: typeof simulatedComponentStates
   ) => {
       const energizedPins = new Set<string>();
-      const energizedComponents = new Set<string>();
-      let changedInIteration = true;
-
+      
       currentComponents.forEach(comp => {
           if (comp.type === '24V') {
               Object.keys(COMPONENT_DEFINITIONS[comp.type]?.pins || {}).forEach(pinName => {
@@ -128,9 +131,8 @@ const DesignerPageContent: React.FC = () => {
           }
       });
 
-      while (changedInIteration) {
-          changedInIteration = false;
-
+      for (let i = 0; i < (currentComponents.length + currentConnections.length); i++) {
+          let changedInIteration = false;
           currentConnections.forEach(conn => {
               const startKey = `${conn.startComponentId}/${conn.startPinName}`;
               const endKey = `${conn.endComponentId}/${conn.endPinName}`;
@@ -146,76 +148,60 @@ const DesignerPageContent: React.FC = () => {
               const startConducts = startState?.currentContactState?.[conn.startPinName] !== 'open';
               const endConducts = endState?.currentContactState?.[conn.endPinName] !== 'open';
               
-              const startEnergized = energizedPins.has(startKey);
-              const endEnergized = energizedPins.has(endKey);
-
-              if (startEnergized && startConducts && !endEnergized && endConducts) {
+              if (energizedPins.has(startKey) && startConducts && !energizedPins.has(endKey) && endConducts) {
                   energizedPins.add(endKey);
                   changedInIteration = true;
               }
-              if (endEnergized && endConducts && !startEnergized && startConducts) {
+              if (energizedPins.has(endKey) && endConducts && !energizedPins.has(startKey) && startConducts) {
                   energizedPins.add(startKey);
                   changedInIteration = true;
               }
           });
+          if (!changedInIteration) break;
       }
       
-      energizedPins.forEach(pinKey => {
-          const [componentId] = pinKey.split('/');
-          energizedComponents.add(componentId);
-      });
+      return { energizedPins };
+  }, []);
 
-      return { energizedPins, energizedComponents };
-  };
-
-  const updateConnectionStates = (
-      currentConnections: Connection[],
-      energizedPins: Set<string>
-  ) => {
-      const newSimConnStates: { [key: string]: SimulatedConnectionState } = {};
-      currentConnections.forEach(conn => {
-          const isConducting = energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`);
-          newSimConnStates[conn.id] = { isConducting };
-      });
-      return newSimConnStates;
-  };
-
+  useEffect(() => {
+    if (isSimulating) {
+      runSimulationStep();
+    }
+  }, [isSimulating, components, connections, runSimulationStep, simulatedComponentStates]);
 
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
     const component = components.find(c => c.id === componentId);
     if (!component) return null;
     const definition = COMPONENT_DEFINITIONS[component.type];
     if (!definition || !definition.pins[pinName]) return null;
-
     const pinDef = definition.pins[pinName];
     const scale = component.scale || 1;
-
     return {
       x: component.x + pinDef.x * scale,
       y: component.y + pinDef.y * scale
     };
   }, [components]);
 
-
   const handleComponentMouseUpInSim = useCallback(() => {
     if (pressedComponentId) {
-        const component = components.find(c => c.id === pressedComponentId);
-        const paletteComp = component ? getPaletteComponentById(component.firebaseComponentId) : null;
-        const simConfig = paletteComp?.simulation;
-
-        if (component && simConfig && simConfig.controlLogic === 'toggle_on_press') {
-            setSimulatedComponentStates(prev => ({
-                ...prev,
-                [component.id]: {
-                    ...prev[component.id],
-                    currentContactState: { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) }
-                }
-            }));
-        }
+        setSimulatedComponentStates(prev => {
+            const component = components.find(c => c.id === pressedComponentId);
+            const paletteComp = component ? getPaletteComponentById(component.firebaseComponentId) : null;
+            const simConfig = paletteComp?.simulation;
+            if (component && simConfig && simConfig.controlLogic === 'toggle_on_press') {
+                return {
+                    ...prev,
+                    [component.id]: {
+                        ...prev[component.id],
+                        currentContactState: { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) }
+                    }
+                };
+            }
+            return prev;
+        });
         setPressedComponentId(null);
     }
-  }, [pressedComponentId, components]); 
-
+  }, [pressedComponentId, components]);
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
     if (isSimulating) {
@@ -239,31 +225,23 @@ const DesignerPageContent: React.FC = () => {
     }
   };
   
-  const handleWaypointMouseDown = (connectionId: string, waypointIndex: number) => {
+  const handleWaypointMouseDown = useCallback((connectionId: string, waypointIndex: number) => {
       if (isSimulating) return;
       setDraggingWaypoint({connectionId, waypointIndex});
-  }
+  }, []);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!svgRef.current) return;
     const CTM = svgRef.current.getScreenCTM();
     if (!CTM) return;
-
     const pointInSvg = svgRef.current.createSVGPoint();
     pointInSvg.x = e.clientX;
     pointInSvg.y = e.clientY;
     const { x, y } = pointInSvg.matrixTransform(CTM.inverse());
-    
     setCurrentMouseSvgCoords({x, y});
 
     if (draggingComponentId && !isSimulating) {
-      setComponents(prevComponents =>
-        prevComponents.map(comp =>
-          comp.id === draggingComponentId
-            ? { ...comp, x: x - offset.x, y: y - offset.y }
-            : comp
-        )
-      );
+      setComponents(prev => prev.map(comp => comp.id === draggingComponentId ? { ...comp, x: x - offset.x, y: y - offset.y } : comp));
     } else if (draggingWaypoint) {
         setConnections(prev => prev.map(conn => {
             if (conn.id === draggingWaypoint.connectionId) {
@@ -284,7 +262,6 @@ const DesignerPageContent: React.FC = () => {
     setDraggingWaypoint(null);
   }, [isSimulating, handleComponentMouseUpInSim]);
 
-
   useEffect(() => {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUpGlobal);
@@ -301,47 +278,29 @@ const DesignerPageContent: React.FC = () => {
         setCanvasDimensions({ width: Math.max(width, 300), height: Math.max(height - 50, 300) });
       }
     });
-
-    if (canvasContainerRef.current) {
-      resizeObserver.observe(canvasContainerRef.current);
-    }
-
+    if (canvasContainerRef.current) resizeObserver.observe(canvasContainerRef.current);
     return () => {
-      if (canvasContainerRef.current) {
-        resizeObserver.unobserve(canvasContainerRef.current);
-      }
+      if (canvasContainerRef.current) resizeObserver.unobserve(canvasContainerRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (isSimulating) {
-      runSimulationStep();
-    }
-  }, [isSimulating, components, connections, runSimulationStep]); 
 
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
       const newSimulatingState = !prev;
       if (newSimulatingState) {
-        const initialSimCompStates: { [key: string]: SimulatedComponentState } = {};
-        components.forEach(comp => {
+        setSimulatedComponentStates(components.reduce((acc, comp) => {
           const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
           const simConfig = paletteComp?.simulation;
-          initialSimCompStates[comp.id] = {
+          acc[comp.id] = {
             isEnergized: false,
             currentContactState: { ...(simConfig?.initialContactState || {}) },
-            timerActive: false,
-            timerRemaining: null,
-            isLocked: simConfig?.controlLogic === 'fixed_open' || simConfig?.controlLogic === 'fixed_closed',
           };
-        });
-        setSimulatedComponentStates(initialSimCompStates);
-
-        const initialSimConnStates: { [key: string]: SimulatedConnectionState } = {};
-        connections.forEach(conn => {
-          initialSimConnStates[conn.id] = { isConducting: false };
-        });
-        setSimulatedConnectionStates(initialSimConnStates);
+          return acc;
+        }, {} as { [key: string]: SimulatedComponentState }));
+        setSimulatedConnectionStates(connections.reduce((acc, conn) => {
+          acc[conn.id] = { isConducting: false };
+          return acc;
+        }, {} as { [key: string]: SimulatedConnectionState }));
       } else {
         activeTimerTimeouts.current.forEach(t => clearTimeout(t.timerId));
         activeTimerTimeouts.current = [];
@@ -351,119 +310,45 @@ const DesignerPageContent: React.FC = () => {
     });
   }, [components, connections]);
 
-
-  const handlePinClick = (componentId: string, pinName: string, pinCoords: Point) => {
+  const handlePinClick = useCallback((componentId: string, pinName: string, pinCoords: Point) => {
     if (isSimulating) return;
-
-    const targetComponent = components.find(c => c.id === componentId);
-    if (!targetComponent) return;
-    const targetDefinition = COMPONENT_DEFINITIONS[targetComponent.type];
-    if (!targetDefinition || !targetDefinition.pins[pinName]) return;
-
     if (connectingPin) {
-      if (connectingPin.componentId === componentId && connectingPin.pinName === pinName) {
-        setConnectingPin(null);
-        return;
-      }
-
-      const isStartPinUsed = connections.some(conn =>
-        (conn.startComponentId === connectingPin.componentId && conn.startPinName === connectingPin.pinName) ||
-        (conn.endComponentId === connectingPin.componentId && conn.endPinName === connectingPin.pinName)
-      );
-      const isEndPinUsed = connections.some(conn =>
-        (conn.startComponentId === componentId && conn.startPinName === pinName) ||
-        (conn.endComponentId === componentId && conn.endPinName === pinName)
-      );
-
-      if (isStartPinUsed) {
-        toast({ title: "Pin bereits belegt", description: `Der Pin ${connectingPin.componentId}/${connectingPin.pinName} wird bereits verwendet.`, variant: "destructive" });
-        setConnectingPin(null);
-        return;
-      }
-      if (isEndPinUsed) {
-        toast({ title: "Pin bereits belegt", description: `Der Pin ${componentId}/${pinName} wird bereits verwendet.`, variant: "destructive" });
-        setConnectingPin(null);
-        return;
-      }
-
-      setConnections(prev => [
-        ...prev,
-        {
-          id: `conn-${Date.now()}`,
-          startComponentId: connectingPin.componentId,
-          startPinName: connectingPin.pinName,
-          endComponentId: componentId,
-          endPinName: pinName,
-          color: projectType === "Installationsschaltplan" ? "black" : undefined,
-          numberOfWires: projectType === "Installationsschaltplan" ? 1 : undefined,
-          waypoints: [],
-        },
-      ]);
-      toast({ title: "Verbindung erstellt", description: `Zwischen ${connectingPin.componentId}/${connectingPin.pinName} und ${componentId}/${pinName}.` });
+      setConnections(prev => [...prev, { id: `conn-${Date.now()}`, startComponentId: connectingPin.componentId, startPinName: connectingPin.pinName, endComponentId: componentId, endPinName: pinName, waypoints: [] }]);
       setConnectingPin(null);
     } else {
-      const isPinAlreadyConnected = connections.some(conn =>
-        (conn.startComponentId === componentId && conn.startPinName === pinName) ||
-        (conn.endComponentId === componentId && conn.endPinName === pinName)
-      );
-      if (isPinAlreadyConnected) {
-        toast({ title: "Pin bereits belegt", description: `Der Pin ${componentId}/${pinName} wird bereits verwendet.`, variant: "destructive" });
-        return;
-      }
       setConnectingPin({ componentId, pinName, coords: pinCoords });
     }
-  };
+  }, [isSimulating, connectingPin]);
 
-  const handleComponentClick = (id: string, isDoubleClick = false) => {
-    const component = components.find(c => c.id === id);
-    if (!component) return;
-
-    const paletteDef = getPaletteComponentById(component.firebaseComponentId);
-    const simConfig = paletteDef?.simulation;
-
+  const handleComponentClick = useCallback((id: string, isDoubleClick = false) => {
     if (isSimulating) {
+        const component = components.find(c => c.id === id);
+        const paletteDef = component ? getPaletteComponentById(component.firebaseComponentId) : null;
+        const simConfig = paletteDef?.simulation;
         if (simConfig?.interactable && simConfig.controlLogic === 'toggle_on_click') {
             setSimulatedComponentStates(prev => {
-                const currentSimState = prev[id] || { currentContactState: { ...simConfig.initialContactState } };
-                const newPinStates: { [key: string]: 'open' | 'closed' } = {};
-
-                let isActiveState = false;
-                if (simConfig.outputPinStateOnEnergized && simConfig.outputPinStateOnDeEnergized) {
-                     isActiveState = JSON.stringify(currentSimState.currentContactState) === JSON.stringify(simConfig.outputPinStateOnEnergized);
-                } else if (simConfig.initialContactState) { 
-                     isActiveState = JSON.stringify(currentSimState.currentContactState) !== JSON.stringify(simConfig.initialContactState);
-                }
-
-
-                if (isActiveState) {
-                    Object.assign(newPinStates, (simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}));
-                } else {
-                    Object.assign(newPinStates, (simConfig.outputPinStateOnEnergized || simConfig.initialContactState || {}));
-                }
-                const newCompState = { ...prev, [id]: { ...currentSimState, currentContactState: newPinStates } };
-                return newCompState;
+                const currentSimState = prev[id];
+                const isActiveState = JSON.stringify(currentSimState.currentContactState) === JSON.stringify(simConfig.outputPinStateOnEnergized);
+                return { ...prev, [id]: { ...currentSimState, currentContactState: isActiveState ? (simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) : (simConfig.outputPinStateOnEnergized || {}) }};
             });
         }
         return;
     }
-
     if (isDoubleClick) {
-      setComponentToEdit(component);
-      setIsEditModalOpen(true);
-      setSelectedComponentForSidebar(null);
-      setSelectedConnectionId(null);
-      setIsPropertiesSidebarOpen(false);
+      const component = components.find(c => c.id === id);
+      if (component) {
+        setComponentToEdit(component);
+        setIsEditModalOpen(true);
+      }
     } else {
-      setSelectedComponentForSidebar(component);
+      setSelectedComponentForSidebar(components.find(c => c.id === id) || null);
       setSelectedConnectionId(null);
       setIsPropertiesSidebarOpen(true);
     }
-  };
+  }, [isSimulating, components]);
 
-
-  const handleConnectionClick = (connectionId: string, clickCoords: Point) => {
+  const handleConnectionClick = useCallback((connectionId: string, clickCoords: Point) => {
     if (isSimulating) return;
-
     setConnections(prev => prev.map(conn => {
         if (conn.id === connectionId) {
             const start = getAbsolutePinCoordinates(conn.startComponentId, conn.startPinName);
@@ -496,11 +381,10 @@ const DesignerPageContent: React.FC = () => {
         }
         return conn;
     }));
-
     setSelectedConnectionId(connectionId);
     setSelectedComponentForSidebar(null);
     setIsPropertiesSidebarOpen(true);
-  };
+  }, [isSimulating, getAbsolutePinCoordinates]);
 
   const handleComponentMouseDownInSim = (id: string) => {
     const component = components.find(c => c.id === id);
@@ -509,144 +393,69 @@ const DesignerPageContent: React.FC = () => {
 
     if (component && simConfig?.interactable && simConfig.controlLogic === 'toggle_on_press') {
         setPressedComponentId(id); 
-        setSimulatedComponentStates(prev => {
-            const currentSimState = prev[id] || { currentContactState: { ...simConfig.initialContactState } };
-            const activeState = simConfig.outputPinStateOnEnergized || {};
-            const newContactState = { ...activeState };
-
-            const newCompState = {
-                ...prev,
-                [component.id]: {
-                    ...currentSimState,
-                    currentContactState: newContactState
-                }
-            };
-            return newCompState;
-        });
+        setSimulatedComponentStates(prev => ({
+            ...prev,
+            [id]: {
+                ...prev[id],
+                currentContactState: { ...(simConfig.outputPinStateOnEnergized || {}) }
+            }
+        }));
     }
   };
 
-  const handleSaveComponentChanges = (id: string, newLabel: string, newPinLabels: Record<string, string>) => {
-    setComponents(prev =>
-      prev.map(comp =>
-        comp.id === id ? { ...comp, label: newLabel, displayPinLabels: newPinLabels } : comp
-      )
-    );
-    if (selectedComponentForSidebar?.id === id) {
-      setSelectedComponentForSidebar(prev => prev ? { ...prev, label: newLabel, displayPinLabels: newPinLabels } : null);
-    }
+  const handleSaveComponentChanges = useCallback((id: string, newLabel: string, newPinLabels: Record<string, string>) => {
+    setComponents(prev => prev.map(comp => comp.id === id ? { ...comp, label: newLabel, displayPinLabels: newPinLabels } : comp));
     toast({ title: "Komponente gespeichert", description: `Änderungen an ${newLabel} wurden übernommen.` });
-  };
+  }, [toast]);
 
-  const handleUpdateComponentFromSidebar = (id: string, updates: Partial<ElectricalComponent>) => {
-    setComponents(prev =>
-      prev.map(comp => (comp.id === id ? { ...comp, ...updates } : comp))
-    );
+  const handleUpdateComponentFromSidebar = useCallback((id: string, updates: Partial<ElectricalComponent>) => {
+    setComponents(prev => prev.map(comp => (comp.id === id ? { ...comp, ...updates } : comp)));
     setSelectedComponentForSidebar(prev => (prev && prev.id === id ? { ...prev, ...updates } : prev));
-  };
+  }, []);
 
-   const handleUpdateConnectionEndpoint = (connectionId: string, newEndComponentId: string, newEndPinName: string) => {
-    setConnections(prevConnections =>
-      prevConnections.map(conn =>
-        conn.id === connectionId
-          ? { ...conn, endComponentId: newEndComponentId, endPinName: newEndPinName }
-          : conn
-      )
-    );
+   const handleUpdateConnectionEndpoint = useCallback((connectionId: string, newEndComponentId: string, newEndPinName: string) => {
+    setConnections(prev => prev.map(conn => conn.id === connectionId ? { ...conn, endComponentId: newEndComponentId, endPinName: newEndPinName } : conn));
     toast({ title: "Verbindung geändert", description: `Endpunkt der Verbindung ${connectionId} aktualisiert.` });
-     if (isSimulating) {
-      runSimulationStep();
-    }
-  };
+  }, [toast]);
 
-  const handleUpdateConnection = (connectionId: string, updates: Partial<Connection>) => {
-    setConnections(prevConnections =>
-      prevConnections.map(conn =>
-        conn.id === connectionId
-          ? { ...conn, ...updates }
-          : conn
-      )
-    );
+  const handleUpdateConnection = useCallback((connectionId: string, updates: Partial<Connection>) => {
+    setConnections(prev => prev.map(conn => conn.id === connectionId ? { ...conn, ...updates } : conn));
     toast({ title: "Verbindung aktualisiert", description: `Eigenschaften der Verbindung ${connectionId} geändert.` });
-     if (isSimulating) {
-      runSimulationStep();
-    }
-  };
+  }, [toast]);
 
-
-  const addComponent = (paletteItem: PaletteComponentFirebaseData) => {
+  const addComponent = useCallback((paletteItem: PaletteComponentFirebaseData) => {
     if (isSimulating) {
         toast({ title: "Aktion nicht erlaubt", description: "Bauteile können nicht während der Simulation hinzugefügt werden.", variant: "destructive" });
         return;
     }
     const newId = `${paletteItem.id.replace(/[^a-z0-9]/gi, '')}-${Date.now()}`;
     const definition = COMPONENT_DEFINITIONS[paletteItem.type];
-
-    const existingOfType = components.filter(c => c.firebaseComponentId === paletteItem.id).length;
-    let newLabel = `${paletteItem.defaultLabelPrefix}${existingOfType + 1}`;
-    if (paletteItem.defaultLabelPrefix === '+24V' || paletteItem.defaultLabelPrefix === '0V') {
-      newLabel = paletteItem.defaultLabelPrefix;
-      if (components.some(c => c.label === newLabel)) {
-        newLabel = `${paletteItem.defaultLabelPrefix}${existingOfType + 1}`;
-      }
-    }
-
-
-    const newComponent: ElectricalComponent = {
-      id: newId,
-      type: paletteItem.type,
-      firebaseComponentId: paletteItem.id,
-      x: 100 + Math.random() * 50,
-      y: 100 + Math.random() * 50,
-      label: newLabel,
-      state: definition?.initialState ? { ...definition.initialState } : undefined,
-      displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
-      scale: 1.0,
-      width: null,
-      height: null,
-    };
+    const newComponent: ElectricalComponent = { id: newId, type: paletteItem.type, firebaseComponentId: paletteItem.id, x: 100, y: 100, label: `${paletteItem.defaultLabelPrefix}${components.filter(c => c.type === paletteItem.type).length + 1}`, displayPinLabels: { ...(paletteItem.initialPinLabels || {}) }, scale: 1.0 };
     setComponents(prev => [...prev, newComponent]);
-    setSelectedComponentForSidebar(newComponent);
-    setSelectedConnectionId(null);
-    setIsPropertiesSidebarOpen(true);
-  };
+  }, [isSimulating, components, toast]);
 
-  const confirmDelete = (type: 'component' | 'connection' | 'waypoint', id: string, waypointIndex?: number) => {
+  const confirmDelete = useCallback((type: 'component' | 'connection' | 'waypoint', id: string, waypointIndex?: number) => {
     if (isSimulating) {
         toast({ title: "Aktion nicht erlaubt", description: "Elemente können nicht während der Simulation gelöscht werden.", variant: "destructive" });
         return;
     }
     setDeleteTarget({ type, id, waypointIndex });
     setIsConfirmDeleteModalOpen(true);
-  };
+  }, [isSimulating, toast]);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
-
-    if (deleteTarget.type === 'component') {
-      const componentLabel = components.find(c=>c.id === deleteTarget.id)?.label;
-      setComponents(prev => prev.filter(comp => comp.id !== deleteTarget.id));
-      setConnections(prev => prev.filter(conn => conn.startComponentId !== deleteTarget.id && conn.endComponentId !== deleteTarget.id));
-      if (connectingPin?.componentId === deleteTarget.id) setConnectingPin(null);
-      if (selectedComponentForSidebar?.id === deleteTarget.id) {
-        setSelectedComponentForSidebar(null);
-        setIsPropertiesSidebarOpen(false);
-      }
-       toast({ title: "Komponente gelöscht", description: `Komponente "${componentLabel || deleteTarget.id}" entfernt.` });
-    } else if (deleteTarget.type === 'connection') {
-      setConnections(prev => prev.filter(conn => conn.id !== deleteTarget.id));
-      if (selectedConnectionId === deleteTarget.id) {
-        setSelectedConnectionId(null);
-        setIsPropertiesSidebarOpen(false);
-      }
-      toast({ title: "Verbindung gelöscht", description: `Verbindung ${deleteTarget.id} entfernt.` });
-    } else if (deleteTarget.type === 'waypoint') {
+    const { type, id, waypointIndex } = deleteTarget;
+    if (type === 'component') {
+      setComponents(prev => prev.filter(comp => comp.id !== id));
+      setConnections(prev => prev.filter(conn => conn.startComponentId !== id && conn.endComponentId !== id));
+    } else if (type === 'connection') {
+      setConnections(prev => prev.filter(conn => conn.id !== id));
+    } else if (type === 'waypoint') {
         setConnections(prev => prev.map(conn => {
-            if (conn.id === deleteTarget.id) {
+            if (conn.id === id) {
                 const newWaypoints = [...(conn.waypoints || [])];
-                if(deleteTarget.waypointIndex !== undefined) {
-                    newWaypoints.splice(deleteTarget.waypointIndex, 1);
-                }
+                if(waypointIndex !== undefined) newWaypoints.splice(waypointIndex, 1);
                 return { ...conn, waypoints: newWaypoints };
             }
             return conn;
@@ -654,38 +463,26 @@ const DesignerPageContent: React.FC = () => {
     }
     setIsConfirmDeleteModalOpen(false);
     setDeleteTarget(null);
-    if (isSimulating) runSimulationStep();
-  };
+  }, [deleteTarget]);
 
-  const handleClosePropertiesSidebar = () => {
-    setIsPropertiesSidebarOpen(false);
-    setSelectedComponentForSidebar(null);
-    setSelectedConnectionId(null);
-  };
-
-  const handleDeleteConnectionFromSidebar = (connectionId: string) => {
-    confirmDelete('connection', connectionId);
-  };
-
-  const handleExportSVG = () => {
+  const handleClosePropertiesSidebar = useCallback(() => setIsPropertiesSidebarOpen(false), []);
+  const handleDeleteConnectionFromSidebar = useCallback((connectionId: string) => confirmDelete('connection', connectionId), [confirmDelete]);
+  const handleExportSVG = useCallback(() => {
     if (svgRef.current) {
       exportSvg(svgRef.current, `${projectName || 'CircuitCraft-Export'}.svg`);
-      toast({ title: "SVG Export gestartet", description: "Die SVG-Datei wird heruntergeladen." });
-    } else {
-      toast({ title: "SVG Export fehlgeschlagen", description: "Das SVG-Element konnte nicht gefunden werden.", variant: "destructive"});
     }
-  };
+  }, [projectName]);
+  const handlePaletteToggle = useCallback(() => setIsPaletteOpen(prev => !prev), []);
 
   return (
     <div className="flex flex-row h-screen w-full bg-background p-3 gap-3 overflow-hidden">
       <ComponentPalette
         onAddComponent={addComponent}
         isOpen={isPaletteOpen}
-        onToggle={() => setIsPaletteOpen(!isPaletteOpen)}
+        onToggle={handlePaletteToggle}
         paletteComponents={filteredPaletteComponents}
         isSimulating={isSimulating}
       />
-
       <div ref={canvasContainerRef} className="flex-1 flex flex-col items-stretch p-0 rounded-lg shadow-md bg-card min-w-0">
         <div className="flex justify-between items-center p-4 border-b border-border">
             <div>
@@ -711,7 +508,6 @@ const DesignerPageContent: React.FC = () => {
                 </Button>
             </div>
         </div>
-
         <div className="flex-grow p-4 overflow-auto relative min-h-0">
           <CircuitCanvas
             svgRef={svgRef}
@@ -726,7 +522,7 @@ const DesignerPageContent: React.FC = () => {
             onComponentClick={handleComponentClick}
             onConnectionClick={handleConnectionClick}
             onWaypointMouseDown={handleWaypointMouseDown}
-            onWaypointDoubleClick={(connId, index) => confirmDelete('waypoint', connId, index)}
+            onWaypointDoubleClick={confirmDelete}
             width={canvasDimensions.width}
             height={canvasDimensions.height}
             isSimulating={isSimulating}
@@ -736,7 +532,6 @@ const DesignerPageContent: React.FC = () => {
             projectType={projectType}
           />
         </div>
-
         <Accordion type="single" collapsible className="w-full p-4 border-t border-border">
           <AccordionItem value="info">
             <AccordionTrigger className="text-sm hover:no-underline bg-gray-900 text-white hover:bg-gray-700 border border-gray-700 rounded-md px-4 py-2">
@@ -753,7 +548,6 @@ const DesignerPageContent: React.FC = () => {
           </AccordionItem>
         </Accordion>
       </div>
-
       {isPropertiesSidebarOpen && (selectedComponentForSidebar || selectedConnectionId) && (
         <div className={`transition-all duration-300 ease-in-out ${isPropertiesSidebarOpen ? 'w-80' : 'w-0'} overflow-hidden shrink-0`}>
              <PropertiesSidebar
@@ -773,8 +567,6 @@ const DesignerPageContent: React.FC = () => {
               />
         </div>
       )}
-
-
       {componentToEdit && (
         <ComponentEditDialog
           component={componentToEdit}
@@ -784,7 +576,6 @@ const DesignerPageContent: React.FC = () => {
           onSave={handleSaveComponentChanges}
         />
       )}
-
       {deleteTarget && (
         <ConfirmDeleteDialog
           isOpen={isConfirmDeleteModalOpen}
@@ -793,7 +584,6 @@ const DesignerPageContent: React.FC = () => {
           onCancel={() => setIsConfirmDeleteModalOpen(false)}
         />
       )}
-
       <AiSuggestionDialog
         isOpen={isAiSuggestionModalOpen}
         onClose={() => setIsAiSuggestionModalOpen(false)}
@@ -809,3 +599,4 @@ export default function DesignerPage() {
     </Suspense>
   );
 }
+
