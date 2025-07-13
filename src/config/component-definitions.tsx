@@ -39,9 +39,9 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
                 <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
                 {isClosed ? (
-                    <line x1="25" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2" />
+                    <line x1="25" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-200" />
                 ) : (
-                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line" />
+                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-200" />
                 )}
                 <text x="15" y="18" className="text-pin">{displayPinLabels['13']}</text>
                 <text x="15" y="48" className="text-pin">{displayPinLabels['14']}</text>
@@ -66,11 +66,11 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
                 <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
                 {isClosed ? (
                     <>
-                        <line x1="25" y1="22.5" x2="30" y2="22.5" className="line stroke-[hsl(var(--destructive))] stroke-2" />
-                        <line x1="30" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2" />
+                        <line x1="25" y1="22.5" x2="30" y2="22.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-200" />
+                        <line x1="30" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-200" />
                     </>
                 ) : (
-                     <line x1="25" y1="22.5" x2="25" y2="37.5" className="line" /> // Represents open for simulation
+                     <line x1="25" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-200" /> // Represents open for simulation
                 )}
                 <text x="15" y="18" className="text-pin">{displayPinLabels['11']}</text>
                 <text x="15" y="48" className="text-pin">{displayPinLabels['12']}</text>
@@ -106,7 +106,13 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 75,
     render: (label, _state, displayPinLabels = { 'X1': 'X1', 'X2': 'X2' }, simulatedState) => (
       <>
-        <circle cx="37.5" cy="37.5" r="25" className="symbol" fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} />
+        <circle 
+            cx="37.5" 
+            cy="37.5" 
+            r="25" 
+            className={`symbol transition-all duration-300 ${simulatedState?.isEnergized ? 'lamp-glow' : ''}`}
+            fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} 
+        />
         <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 - 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 + 25 / Math.sqrt(2)} className="line" />
         <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 + 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 - 25 / Math.sqrt(2)} className="line" />
         <text x="70" y="37.5" className="component-text">{label}</text>
