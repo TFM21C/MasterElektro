@@ -105,7 +105,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               stroke={strokeColor}
               strokeWidth={strokeWidth}
               fill="none"
-              strokeDasharray={isSimulating && isConducting ? "4 2" : "none"}
+              className={isSimulating && isConducting ? "anim-stroke-flow" : ""}
               onClick={(e) => {
                  if(svgRef.current) {
                     const CTM = svgRef.current.getScreenCTM();
@@ -126,11 +126,12 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               stroke="transparent"
               strokeWidth="10"
               fill="none"
-               onClick={(e) => {
-                 if(svgRef.current) {
-                    const CTM = svgRef.current.getScreenCTM();
-                    if(CTM) {
-                        const svgPoint = svgRef.current.createSVGPoint();
+              className={isSimulating && isConducting ? "anim-stroke-flow" : ""}
+              onClick={(e) => {
+                if(svgRef.current) {
+                   const CTM = svgRef.current.getScreenCTM();
+                   if(CTM) {
+                       const svgPoint = svgRef.current.createSVGPoint();
                         svgPoint.x = e.clientX;
                         svgPoint.y = e.clientY;
                         const pointInSvg = svgPoint.matrixTransform(CTM.inverse());

@@ -133,6 +133,23 @@
   transition: fill 0.2s ease-in-out;
 }
 .pin-circle:hover {
-  fill: hsl(var(--destructive)); 
+  fill: hsl(var(--destructive));
   opacity: 0.7;
+}
+
+@layer components {
+  .anim-stroke-flow {
+    stroke-dasharray: 8 3;
+    animation: stroke-flow 1s linear infinite;
+  }
+
+  .lamp-glow {
+    filter: drop-shadow(0 0 6px hsl(var(--primary)));
+  }
+}
+
+@keyframes stroke-flow {
+  to {
+    stroke-dashoffset: -11;
+  }
 }
