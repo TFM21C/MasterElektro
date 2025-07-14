@@ -33,7 +33,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     width: 80,
     height: 60,
     render: (label, _state, displayPinLabels = { '13': '13', '14': '14' }, simulatedState) => {
-        const isClosed = simulatedState?.currentContactState?.['13'] === 'closed';
+        const isClosed = simulatedState?.currentContactState?.['13'] === 'closed' &&
+                          simulatedState?.currentContactState?.['14'] === 'closed';
         return (
             <>
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
@@ -59,7 +60,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     width: 80,
     height: 60,
     render: (label, _state, displayPinLabels = { '11': '11', '12': '12' }, simulatedState) => {
-        const isClosed = simulatedState?.currentContactState?.['11'] === 'closed';
+        const isClosed = simulatedState?.currentContactState?.['11'] === 'closed' &&
+                          simulatedState?.currentContactState?.['12'] === 'closed';
         return (
             <>
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
