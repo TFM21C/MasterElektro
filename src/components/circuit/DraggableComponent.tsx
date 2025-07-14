@@ -57,8 +57,8 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
       onMouseDown={isSimulating ? undefined : handleComponentMouseDown}
       onMouseUp={isSimulating ? undefined : handleComponentMouseUp}
       onClick={handleComponentClick}
-      onDoubleClick={handleComponentDoubleClick}
-      style={{ cursor: isSimulating ? 'default' : 'grab' }}
+      onDoubleClick={isSimulating ? undefined : handleComponentDoubleClick}
+      style={{ cursor: isSimulating ? 'pointer' : 'grab' }}
       data-testid={`component-${component.id}`}
     >
       {/* The definition.render function draws the component at its base size.
