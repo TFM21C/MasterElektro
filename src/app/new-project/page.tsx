@@ -199,10 +199,11 @@ const DesignerPageContent: React.FC = () => {
                     currentContactState: { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) }
                 }
             }));
+            runSimulationStep();
         }
         setPressedComponentId(null);
     }
-  }, [pressedComponentId, components]); 
+  }, [pressedComponentId, components, runSimulationStep]);
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -425,6 +426,7 @@ const DesignerPageContent: React.FC = () => {
                 const newCompState = { ...prev, [id]: { ...currentSimState, currentContactState: newPinStates } };
                 return newCompState;
             });
+            runSimulationStep();
         }
         return;
     }
@@ -505,6 +507,7 @@ const DesignerPageContent: React.FC = () => {
             };
             return newCompState;
         });
+        runSimulationStep();
     }
   };
 
