@@ -163,11 +163,12 @@ const DesignerPageContent: React.FC = () => {
     });
   }, [components, connections]);
 
+  // Trigger simulation whenever component states change while simulation is active
   useEffect(() => {
     if (isSimulating) {
       runSimulationStep();
     }
-  }, [isSimulating, components, connections, runSimulationStep]);
+  }, [isSimulating, simulatedComponentStates, runSimulationStep]);
 
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
     const component = components.find(c => c.id === componentId);
@@ -426,7 +427,6 @@ const DesignerPageContent: React.FC = () => {
                 const newCompState = { ...prev, [id]: { ...currentSimState, currentContactState: newPinStates } };
                 return newCompState;
             });
-            runSimulationStep();
         }
         return;
     }
@@ -507,7 +507,6 @@ const DesignerPageContent: React.FC = () => {
             };
             return newCompState;
         });
-        runSimulationStep();
     }
   };
 
