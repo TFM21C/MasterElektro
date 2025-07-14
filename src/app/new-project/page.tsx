@@ -178,6 +178,36 @@ const DesignerPageContent: React.FC = () => {
     }
   }, [isSimulating, simulatedComponentStates, runSimulationStep]);
 
+  const toggleComponentState = useCallback((id: string) => {
+    setSimulatedComponentStates(prev => {
+      const component = components.find(c => c.id === id);
+      const simConfig = getPaletteComponentById(component?.firebaseComponentId)?.simulation;
+      if (!component || !simConfig) return prev;
+
+      const currentSimState = prev[id];
+      const activeState = simConfig.outputPinStateOnEnergized || {};
+      const inactiveState = simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {};
+
+      const isActive = JSON.stringify(currentSimState.currentContactState) === JSON.stringify(activeState);
+
+      const nextContactState = isActive ? inactiveState : activeState;
+
+      const allPins = {
+        ...(simConfig.initialContactState || {}),
+        ...activeState,
+        ...inactiveState,
+      };
+
+      return {
+        ...prev,
+        [id]: {
+          ...currentSimState,
+          currentContactState: { ...allPins, ...nextContactState },
+        },
+      };
+    });
+  }, [components]);
+
   const getAbsolutePinCoordinates = useCallback((componentId: string, pinName: string): Point | null => {
     const component = components.find(c => c.id === componentId);
     if (!component) return null;
@@ -196,22 +226,10 @@ const DesignerPageContent: React.FC = () => {
 
   const handleComponentMouseUpInSim = useCallback(() => {
     if (pressedComponentId) {
-        const component = components.find(c => c.id === pressedComponentId);
-        const paletteComp = component ? getPaletteComponentById(component.firebaseComponentId) : null;
-        const simConfig = paletteComp?.simulation;
-
-        if (component && simConfig && simConfig.controlLogic === 'toggle_on_press') {
-            setSimulatedComponentStates(prev => ({
-                ...prev,
-                [component.id]: {
-                    ...prev[component.id],
-                    currentContactState: { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) }
-                }
-            }));
-        }
-        setPressedComponentId(null);
+      toggleComponentState(pressedComponentId);
+      setPressedComponentId(null);
     }
-  }, [pressedComponentId, components]);
+  }, [pressedComponentId, toggleComponentState]);
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -406,37 +424,13 @@ const DesignerPageContent: React.FC = () => {
   }, [isSimulating, components, connections, connectingPin, projectType, toast]);
 
   const handleComponentClick = useCallback((id: string, isDoubleClick = false) => {
+    if (isSimulating) {
+      toggleComponentState(id);
+      return;
+    }
+
     const component = components.find(c => c.id === id);
     if (!component) return;
-
-    const paletteDef = getPaletteComponentById(component.firebaseComponentId);
-    const simConfig = paletteDef?.simulation;
-
-    if (isSimulating) {
-        if (simConfig?.interactable && simConfig.controlLogic === 'toggle_on_click') {
-            setSimulatedComponentStates(prev => {
-                const currentSimState = prev[id] || { currentContactState: { ...simConfig.initialContactState } };
-                const newPinStates: { [key: string]: 'open' | 'closed' } = {};
-
-                let isActiveState = false;
-                if (simConfig.outputPinStateOnEnergized && simConfig.outputPinStateOnDeEnergized) {
-                     isActiveState = JSON.stringify(currentSimState.currentContactState) === JSON.stringify(simConfig.outputPinStateOnEnergized);
-                } else if (simConfig.initialContactState) { 
-                     isActiveState = JSON.stringify(currentSimState.currentContactState) !== JSON.stringify(simConfig.initialContactState);
-                }
-
-
-                if (isActiveState) {
-                    Object.assign(newPinStates, (simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}));
-                } else {
-                    Object.assign(newPinStates, (simConfig.outputPinStateOnEnergized || simConfig.initialContactState || {}));
-                }
-                const newCompState = { ...prev, [id]: { ...currentSimState, currentContactState: newPinStates } };
-                return newCompState;
-            });
-        }
-        return;
-    }
 
     if (isDoubleClick) {
       setComponentToEdit(component);
@@ -449,7 +443,7 @@ const DesignerPageContent: React.FC = () => {
       setSelectedConnectionId(null);
       setIsPropertiesSidebarOpen(true);
     }
-  }, [components, isSimulating]);
+  }, [isSimulating, components, toggleComponentState]);
 
 
   const handleConnectionClick = useCallback((connectionId: string, clickCoords: Point) => {
@@ -494,27 +488,8 @@ const DesignerPageContent: React.FC = () => {
   }, [isSimulating, getAbsolutePinCoordinates]);
 
   const handleComponentMouseDownInSim = (id: string) => {
-    const component = components.find(c => c.id === id);
-    const paletteComp = component ? getPaletteComponentById(component.firebaseComponentId) : null;
-    const simConfig = paletteComp?.simulation;
-
-    if (component && simConfig?.interactable && simConfig.controlLogic === 'toggle_on_press') {
-        setPressedComponentId(id); 
-        setSimulatedComponentStates(prev => {
-            const currentSimState = prev[id] || { currentContactState: { ...simConfig.initialContactState } };
-            const activeState = simConfig.outputPinStateOnEnergized || {};
-            const newContactState = { ...activeState };
-
-            const newCompState = {
-                ...prev,
-                [component.id]: {
-                    ...currentSimState,
-                    currentContactState: newContactState
-                }
-            };
-            return newCompState;
-        });
-    }
+    setPressedComponentId(id);
+    toggleComponentState(id);
   };
 
   const handleSaveComponentChanges = useCallback((id: string, newLabel: string, newPinLabels: Record<string, string>) => {
