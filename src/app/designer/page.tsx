@@ -53,37 +53,41 @@ const DesignerPageContent: React.FC = () => {
 
   // --- SIMULATION LOGIC ---
   const runSimulation = useCallback(() => {
-    let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
-    
-    // Update contacts based on coils
-    components.forEach(comp => {
-      const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-      if (paletteComp?.simulation?.controlledBy === 'label_match') {
-        const isEnergized = components.some(c => c.label === comp.label && newSimCompStates[c.id]?.isEnergized);
-        const targetState = isEnergized ? paletteComp.simulation.outputPinStateOnEnergized : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
-        newSimCompStates[comp.id].currentContactState = { ...targetState };
-      }
-    });
-    
-    const energizedPins = new Set<string>();
-    components.filter(c => c.type === '24V').forEach(c => energizedPins.add(`${c.id}/out`));
-    components.filter(c => c.type === '0V').forEach(c => energizedPins.add(`${c.id}/in`)); // Add 0V as a potential source for checks
+    let hasStateChanged = false;
 
-    for (let i = 0; i < (components.length + connections.length); i++) {
+    setSimulatedComponentStates(currentStates => {
+      let newStates = JSON.parse(JSON.stringify(currentStates));
+
+      // Update contacts based on coils
+      components.forEach(comp => {
+        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+        if (paletteComp?.simulation?.controlledBy === 'label_match') {
+          const isEnergized = components.some(c => c.label === comp.label && newStates[c.id]?.isEnergized);
+          const targetState = isEnergized
+              ? paletteComp.simulation.outputPinStateOnEnergized
+              : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
+          if (JSON.stringify(newStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
+            newStates[comp.id].currentContactState = { ...targetState };
+          }
+        }
+      });
+
+      const energizedPins = new Set<string>();
+      components.filter(c => c.type === '24V').forEach(c => energizedPins.add(`${c.id}/out`));
+
+      // Propagate power iteratively
+      for (let i = 0; i < (components.length + connections.length); i++) {
         let changed = false;
         connections.forEach(conn => {
             const startKey = `${conn.startComponentId}/${conn.startPinName}`;
             const endKey = `${conn.endComponentId}/${conn.endPinName}`;
-            const startComp = components.find(c => c.id === conn.startComponentId);
-            const endComp = components.find(c => c.id === conn.endComponentId);
+            const startState = newStates[conn.startComponentId];
+            const endState = newStates[conn.endComponentId];
 
-            if (!startComp || !endComp) return;
+            if(!startState || !endState) return;
 
-            const startState = newSimCompStates[startComp.id];
-            const endState = newSimCompStates[endComp.id];
-            
-            const startConducts = startState?.currentContactState?.[conn.startPinName] !== 'open';
-            const endConducts = endState?.currentContactState?.[conn.endPinName] !== 'open';
+            const startConducts = startState.currentContactState?.[conn.startPinName] !== 'open';
+            const endConducts = endState.currentContactState?.[conn.endPinName] !== 'open';
 
             if (energizedPins.has(startKey) && startConducts && !energizedPins.has(endKey) && endConducts) {
                 energizedPins.add(endKey);
@@ -95,29 +99,37 @@ const DesignerPageContent: React.FC = () => {
             }
         });
         if (!changed) break;
-    }
-
-    components.forEach(comp => {
-      const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
-      if (simConfig?.energizePins) {
-        const isEnergized = simConfig.energizePins.every(pin => energizedPins.has(`${comp.id}/${pin}`));
-        newSimCompStates[comp.id].isEnergized = isEnergized;
       }
-    });
 
-    const newSimConnStates = connections.reduce((acc, conn) => {
+      // Update component and connection states
+      components.forEach(comp => {
+          const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
+          if (simConfig?.energizePins) {
+              const isEnergized = simConfig.energizePins.every(pin => energizedPins.has(`${comp.id}/${pin}`));
+              if(newStates[comp.id].isEnergized !== isEnergized) {
+                newStates[comp.id].isEnergized = isEnergized;
+              }
+          }
+      });
+
+      if (JSON.stringify(currentStates) !== JSON.stringify(newStates)) {
+          hasStateChanged = true;
+      }
+
+      const newConnStates = connections.reduce((acc, conn) => {
         const isConducting = energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`);
         acc[conn.id] = { isConducting };
         return acc;
-    }, {} as { [key: string]: SimulatedConnectionState });
-    
-    if (JSON.stringify(newSimCompStates) !== JSON.stringify(simulatedComponentStates)) {
-      setSimulatedComponentStates(newSimCompStates);
-    }
-    if (JSON.stringify(newSimConnStates) !== JSON.stringify(simulatedConnectionStates)) {
-      setSimulatedConnectionStates(newSimConnStates);
-    }
-  }, [components, connections, simulatedComponentStates, simulatedConnectionStates]);
+      }, {} as { [key: string]: SimulatedConnectionState });
+
+      if (JSON.stringify(simulatedConnectionStates) !== JSON.stringify(newConnStates)) {
+          setSimulatedConnectionStates(newConnStates);
+          hasStateChanged = true;
+      }
+
+      return hasStateChanged ? newStates : currentStates;
+    });
+  }, [components, connections, simulatedConnectionStates]);
 
   useEffect(() => {
     if (isSimulating) {
@@ -145,12 +157,22 @@ const DesignerPageContent: React.FC = () => {
     if (isSimulating) {
         const component = components.find(c => c.id === id);
         const simConfig = getPaletteComponentById(component?.firebaseComponentId)?.simulation;
-        if(component && simConfig?.interactable){
+
+        if (component && simConfig?.interactable) {
             setSimulatedComponentStates(prev => {
                 const currentSimState = prev[id];
                 const isActiveState = JSON.stringify(currentSimState.currentContactState) === JSON.stringify(simConfig.outputPinStateOnEnergized);
-                const nextContactState = isActiveState ? (simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) : (simConfig.outputPinStateOnEnergized || {});
-                return {...prev, [id]: {...currentSimState, currentContactState: nextContactState}};
+                const nextContactState = isActiveState 
+                    ? (simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) 
+                    : (simConfig.outputPinStateOnEnergized || {});
+                
+                return {
+                    ...prev,
+                    [id]: {
+                        ...currentSimState,
+                        currentContactState: nextContactState
+                    }
+                };
             });
         }
         return;
