@@ -751,6 +751,7 @@ const DesignerPageContent: React.FC = () => {
                 onDeleteConnection={handleDeleteConnectionFromSidebar}
                 onUpdateConnectionEndpoint={handleUpdateConnectionEndpoint}
                 onUpdateConnection={handleUpdateConnection}
+                onComponentClick={handleComponentClick}
                 isSimulating={isSimulating}
                 projectType={projectType}
               />

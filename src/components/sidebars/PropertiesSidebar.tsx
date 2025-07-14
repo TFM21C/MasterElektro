@@ -22,6 +22,7 @@ interface PropertiesSidebarProps {
   onDeleteConnection: (connectionId: string) => void;
   onUpdateConnectionEndpoint: (connectionId: string, newEndComponentId: string, newEndPinName: string) => void;
   onUpdateConnection: (connectionId: string, updates: Partial<Connection>) => void;
+  onComponentClick: (id: string) => void;
   isSimulating?: boolean;
   projectType?: ProjectType | null;
 }
@@ -38,6 +39,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   onDeleteConnection,
   onUpdateConnectionEndpoint,
   onUpdateConnection,
+  onComponentClick,
   isSimulating,
   projectType
 }) => {
@@ -262,12 +264,30 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
               </div>
             )}
 
-             <div>
+            <div>
               <p className="text-sm text-muted-foreground">Typ: <span className="font-medium text-card-foreground">{paletteComponent.name}</span></p>
               <p className="text-sm text-muted-foreground">ID: <span className="font-medium text-card-foreground">{component.id}</span></p>
               <p className="text-sm text-muted-foreground">Position: <span className="font-medium text-card-foreground">X: {Math.round(component.x)}, Y: {Math.round(component.y)}</span></p>
-               {isResizable && <p className="text-sm text-muted-foreground">Aktuelle Skalierung: <span className="font-medium text-card-foreground">{(currentScale * 100).toFixed(0)}%</span></p>}
+              {isResizable && (
+                <p className="text-sm text-muted-foreground">Aktuelle Skalierung: <span className="font-medium text-card-foreground">{(currentScale * 100).toFixed(0)}%</span></p>
+              )}
             </div>
+
+            {isSimulating && paletteComponent?.simulation?.interactable && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <h3 className="text-md font-semibold mb-2 text-card-foreground">Simulations-Steuerung</h3>
+                <Button
+                  onClick={() => onComponentClick(component.id)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Kontakt betätigen
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Simuliert einen Klick auf das Bauteil, um dessen Zustand zu ändern.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
