@@ -157,9 +157,17 @@ const DesignerPageContent: React.FC = () => {
         return acc;
       }, {} as { [key: string]: SimulatedConnectionState });
 
-      setSimulatedConnectionStates(newConnStates);
+      setSimulatedConnectionStates(currentConnStates => {
+        if (JSON.stringify(newConnStates) !== JSON.stringify(currentConnStates)) {
+          return newConnStates;
+        }
+        return currentConnStates;
+      });
 
-      return newSimCompStates;
+      if (JSON.stringify(newSimCompStates) !== JSON.stringify(currentSimStates)) {
+        return newSimCompStates;
+      }
+      return currentSimStates;
     });
   }, [components, connections]);
 
@@ -200,11 +208,10 @@ const DesignerPageContent: React.FC = () => {
                     currentContactState: { ...(simConfig.outputPinStateOnDeEnergized || simConfig.initialContactState || {}) }
                 }
             }));
-            runSimulationStep();
         }
         setPressedComponentId(null);
     }
-  }, [pressedComponentId, components, runSimulationStep]);
+  }, [pressedComponentId, components]);
 
 
   const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
