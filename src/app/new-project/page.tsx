@@ -105,6 +105,47 @@ const DesignerPageContent: React.FC = () => {
       const propagate = (energizedSet: Set<string>) => {
         for (let i = 0; i < (components.length + connections.length) * 2; i++) {
           let changed = false;
+
+          // -----------------------------
+          // 1. Internal propagation
+          // -----------------------------
+          components.forEach(comp => {
+            const compState = newSimCompStates[comp.id];
+            const compDef = COMPONENT_DEFINITIONS[comp.type];
+            if (!compState || !compDef) return;
+
+            const pins = Object.keys(compDef.pins);
+            for (let a = 0; a < pins.length; a++) {
+              for (let b = a + 1; b < pins.length; b++) {
+                const pinA = pins[a];
+                const pinB = pins[b];
+
+                const stateA = compState.currentContactState?.[pinA];
+                const stateB = compState.currentContactState?.[pinB];
+
+                const aConducts = stateA !== 'open';
+                const bConducts = stateB !== 'open';
+
+                if (aConducts && bConducts) {
+                  const keyA = `${comp.id}/${pinA}`;
+                  const keyB = `${comp.id}/${pinB}`;
+
+                  if (energizedSet.has(keyA) && !energizedSet.has(keyB)) {
+                    energizedSet.add(keyB);
+                    changed = true;
+                  }
+                  if (energizedSet.has(keyB) && !energizedSet.has(keyA)) {
+                    energizedSet.add(keyA);
+                    changed = true;
+                  }
+                }
+              }
+            }
+          });
+
+          // -----------------------------
+          // 2. External propagation
+          // -----------------------------
           connections.forEach(conn => {
             const startKey = `${conn.startComponentId}/${conn.startPinName}`;
             const endKey = `${conn.endComponentId}/${conn.endPinName}`;
@@ -125,6 +166,8 @@ const DesignerPageContent: React.FC = () => {
               changed = true;
             }
           });
+
+          // If no changes happened in this iteration, the state is stable
           if (!changed) break;
         }
       };
