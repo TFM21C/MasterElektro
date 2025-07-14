@@ -1,5 +1,4 @@
-"use client";
-
+"use client"; 
 import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ const DesignerPageContent: React.FC = () => {
   const [simulatedConnectionStates, setSimulatedConnectionStates] = useState<{ [key: string]: SimulatedConnectionState }>({});
 
   const [draggingComponentId, setDraggingComponentId] = useState<string | null>(null);
-  const [draggingWaypoint, setDraggingWaypoint] = useState<{connectionId: string, waypointIndex: number} | null>(null);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   
   const [connectingPin, setConnectingPin] = useState<{ componentId: string; pinName: string, coords: Point } | null>(null);
@@ -43,37 +41,34 @@ const DesignerPageContent: React.FC = () => {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [componentToEdit, setComponentToEdit] = useState<ElectricalComponent | null>(null);
-
-  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'component' | 'connection' | 'waypoint'; id: string, waypointIndex?: number } | null>(null);
   
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'component' | 'connection'; id: string } | null>(null);
+
   const [selectedComponentForSidebar, setSelectedComponentForSidebar] = useState<ElectricalComponent | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [isPropertiesSidebarOpen, setIsPropertiesSidebarOpen] = useState(false);
   
   const { toast } = useToast();
 
+  // --- SIMULATION LOGIC ---
   const runSimulation = useCallback(() => {
-    if (components.length === 0) return;
-
-    const newSimCompStates: { [key: string]: SimulatedComponentState } = JSON.parse(JSON.stringify(simulatedComponentStates));
-
-    // Update contact states from coils
+    let newSimCompStates = JSON.parse(JSON.stringify(simulatedComponentStates));
+    
+    // Update contacts based on coils
     components.forEach(comp => {
       const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
       if (paletteComp?.simulation?.controlledBy === 'label_match') {
-        const isEnergized = components.some(c => c.label === comp.label && simulatedComponentStates[c.id]?.isEnergized);
+        const isEnergized = components.some(c => c.label === comp.label && newSimCompStates[c.id]?.isEnergized);
         const targetState = isEnergized ? paletteComp.simulation.outputPinStateOnEnergized : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
-        newSimCompStates[comp.id] = { ...newSimCompStates[comp.id], currentContactState: { ...targetState } };
+        newSimCompStates[comp.id].currentContactState = { ...targetState };
       }
     });
-
+    
     const energizedPins = new Set<string>();
-    components.forEach(comp => {
-        if (comp.type === '24V') energizedPins.add(`${comp.id}/out`);
-    });
+    components.filter(c => c.type === '24V').forEach(c => energizedPins.add(`${c.id}/out`));
+    components.filter(c => c.type === '0V').forEach(c => energizedPins.add(`${c.id}/in`)); // Add 0V as a potential source for checks
 
-    // Propagate power iteratively
     for (let i = 0; i < (components.length + connections.length); i++) {
         let changed = false;
         connections.forEach(conn => {
@@ -102,7 +97,6 @@ const DesignerPageContent: React.FC = () => {
         if (!changed) break;
     }
 
-    // Update component energized states
     components.forEach(comp => {
       const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
       if (simConfig?.energizePins) {
@@ -111,17 +105,19 @@ const DesignerPageContent: React.FC = () => {
       }
     });
 
-    // Update connection conducting states
     const newSimConnStates = connections.reduce((acc, conn) => {
         const isConducting = energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`);
         acc[conn.id] = { isConducting };
         return acc;
     }, {} as { [key: string]: SimulatedConnectionState });
-
-    setSimulatedComponentStates(newSimCompStates);
-    setSimulatedConnectionStates(newSimConnStates);
-
-  }, [components, connections, simulatedComponentStates]);
+    
+    if (JSON.stringify(newSimCompStates) !== JSON.stringify(simulatedComponentStates)) {
+      setSimulatedComponentStates(newSimCompStates);
+    }
+    if (JSON.stringify(newSimConnStates) !== JSON.stringify(simulatedConnectionStates)) {
+      setSimulatedConnectionStates(newSimConnStates);
+    }
+  }, [components, connections, simulatedComponentStates, simulatedConnectionStates]);
 
   useEffect(() => {
     if (isSimulating) {
@@ -129,21 +125,21 @@ const DesignerPageContent: React.FC = () => {
     }
   }, [isSimulating, components, connections, simulatedComponentStates, runSimulation]);
 
-
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
       const nextIsSimulating = !prev;
       if (nextIsSimulating) {
         const initialStates = components.reduce((acc, comp) => {
           const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
-          acc[comp.id] = { isEnergized: false, currentContactState: { ...simConfig?.initialContactState }};
+          acc[comp.id] = { isEnergized: false, currentContactState: { ...(simConfig?.initialContactState || {}) }};
           return acc;
         }, {} as {[key:string]: SimulatedComponentState});
         setSimulatedComponentStates(initialStates);
+        setSimulatedConnectionStates(connections.reduce((acc, conn) => ({...acc, [conn.id]: {isConducting: false}}), {}));
       }
       return nextIsSimulating;
     });
-  }, [components]);
+  }, [components, connections]);
   
   const handleComponentClick = useCallback((id: string, isDoubleClick = false) => {
     if (isSimulating) {
@@ -173,8 +169,6 @@ const DesignerPageContent: React.FC = () => {
     }
   }, [isSimulating, components]);
 
-  // ... (other handlers like addComponent, confirmDelete, etc. remain mostly the same, just simplified)
-
   const addComponent = (paletteItem: PaletteComponentFirebaseData) => {
     const newId = `${paletteItem.id.replace(/[^a-z0-9]/gi, '')}-${Date.now()}`;
     const newComponent: ElectricalComponent = {
@@ -185,12 +179,9 @@ const DesignerPageContent: React.FC = () => {
     setComponents(prev => [...prev, newComponent]);
   };
   
-  // Placeholder for other functions
+  // ... other handlers
+  const getAbsolutePinCoordinates = () => ({x:0, y:0}); // Simplified
   const handleMouseDownComponent = () => {};
-  const confirmDelete = () => {};
-  const handleConfirmDelete = () => {};
-  const handleUpdateComponent = () => {};
-  const handleUpdateConnection = () => {};
   
   return (
      <div className="flex flex-row h-screen w-full bg-background p-3 gap-3 overflow-hidden">
@@ -210,7 +201,7 @@ const DesignerPageContent: React.FC = () => {
                     connections={connections}
                     connectingPin={connectingPin}
                     currentMouseSvgCoords={currentMouseSvgCoords}
-                    getAbsolutePinCoordinates={(id, pin) => { /* simplified */ return {x:0, y:0}}}
+                    getAbsolutePinCoordinates={getAbsolutePinCoordinates as any}
                     onMouseDownComponent={handleMouseDownComponent}
                     onMouseUpComponent={() => {}}
                     onPinClick={()=>{}}
