@@ -21,6 +21,8 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   onPinClick,
   onComponentClick,
   connectingPin,
+  isSimulating,
+  simulatedState,
 }) => {
   const definition = COMPONENT_DEFINITIONS[component.type];
   if (!definition) return null;
@@ -52,16 +54,22 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   return (
     <g
       transform={`translate(${component.x}, ${component.y}) scale(${scale})`}
-      onMouseDown={handleComponentMouseDown}
-      onMouseUp={handleComponentMouseUp}
+      onMouseDown={isSimulating ? undefined : handleComponentMouseDown}
+      onMouseUp={isSimulating ? undefined : handleComponentMouseUp}
       onClick={handleComponentClick}
       onDoubleClick={handleComponentDoubleClick}
-      style={{ cursor: 'grab' }}
+      style={{ cursor: isSimulating ? 'default' : 'grab' }}
       data-testid={`component-${component.id}`}
     >
       {/* The definition.render function draws the component at its base size.
           The scale transform applied to this <g> element handles the visual scaling. */}
-      {definition.render(component.label, component.state, component.displayPinLabels)}
+      {definition.render(
+        component.label,
+        component.state,
+        component.displayPinLabels,
+        simulatedState,
+        component.id
+      )}
       
       {/* Pin circles are also drawn within this scaled group.
           Their cx/cy are relative to the unscaled component origin. */}
@@ -77,6 +85,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
             opacity={0.6}
             className="pin-circle"
             onMouseDown={(e) => {
+              if (isSimulating) return;
               e.stopPropagation();
               // Calculate absolute pin coordinates considering the component's position and scale
               const absolutePinX = component.x + pinDef.x * scale;
