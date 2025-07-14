@@ -52,90 +52,106 @@ const DesignerPageContent: React.FC = () => {
   const { toast } = useToast();
 
   // --- SIMULATION LOGIC ---
-  const runSimulation = useCallback(() => {
-    let hasStateChanged = false;
+  const runSimulationStep = useCallback(() => {
+    setSimulatedComponentStates(currentSimStates => {
+      let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
 
-    setSimulatedComponentStates(currentStates => {
-      let newStates = JSON.parse(JSON.stringify(currentStates));
-
-      // Update contacts based on coils
+      // 1. Kontakte anhand gesteuerter Spulen aktualisieren
       components.forEach(comp => {
         const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
         if (paletteComp?.simulation?.controlledBy === 'label_match') {
-          const isEnergized = components.some(c => c.label === comp.label && newStates[c.id]?.isEnergized);
+          const controllingCoils = components.filter(c =>
+            c.label === comp.label &&
+            getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
+          );
+
+          const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
+
           const targetState = isEnergized
-              ? paletteComp.simulation.outputPinStateOnEnergized
-              : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
-          if (JSON.stringify(newStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
-            newStates[comp.id].currentContactState = { ...targetState };
+            ? paletteComp.simulation.outputPinStateOnEnergized
+            : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
+
+          if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
+            newSimCompStates[comp.id].currentContactState = { ...targetState };
           }
         }
       });
 
-      const energizedPins = new Set<string>();
-      components.filter(c => c.type === '24V').forEach(c => energizedPins.add(`${c.id}/out`));
+      // 2. Sets für beide Strompfade erstellen
+      const energizedFrom24V = new Set<string>();
+      const energizedFrom0V = new Set<string>();
 
-      // Propagate power iteratively
-      for (let i = 0; i < (components.length + connections.length); i++) {
-        let changed = false;
-        connections.forEach(conn => {
+      components.forEach(comp => {
+        if (comp.type === '24V') energizedFrom24V.add(`${comp.id}/out`);
+        if (comp.type === '0V') energizedFrom0V.add(`${comp.id}/in`);
+      });
+
+      const propagate = (energizedSet: Set<string>) => {
+        for (let i = 0; i < (components.length + connections.length) * 2; i++) {
+          let changed = false;
+          connections.forEach(conn => {
             const startKey = `${conn.startComponentId}/${conn.startPinName}`;
             const endKey = `${conn.endComponentId}/${conn.endPinName}`;
-            const startState = newStates[conn.startComponentId];
-            const endState = newStates[conn.endComponentId];
 
-            if(!startState || !endState) return;
+            const startState = newSimCompStates[conn.startComponentId];
+            const endState = newSimCompStates[conn.endComponentId];
+            if (!startState || !endState) return;
 
             const startConducts = startState.currentContactState?.[conn.startPinName] !== 'open';
             const endConducts = endState.currentContactState?.[conn.endPinName] !== 'open';
 
-            if (energizedPins.has(startKey) && startConducts && !energizedPins.has(endKey) && endConducts) {
-                energizedPins.add(endKey);
-                changed = true;
+            if (energizedSet.has(startKey) && startConducts && !energizedSet.has(endKey) && endConducts) {
+              energizedSet.add(endKey);
+              changed = true;
             }
-            if (energizedPins.has(endKey) && endConducts && !energizedPins.has(startKey) && startConducts) {
-                energizedPins.add(startKey);
-                changed = true;
+            if (energizedSet.has(endKey) && endConducts && !energizedSet.has(startKey) && startConducts) {
+              energizedSet.add(startKey);
+              changed = true;
             }
-        });
-        if (!changed) break;
-      }
+          });
+          if (!changed) break;
+        }
+      };
 
-      // Update component and connection states
+      propagate(energizedFrom24V);
+      propagate(energizedFrom0V);
+
+      // 3. Komponenten- und Verbindungszustände aktualisieren
       components.forEach(comp => {
-          const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
-          if (simConfig?.energizePins) {
-              const isEnergized = simConfig.energizePins.every(pin => energizedPins.has(`${comp.id}/${pin}`));
-              if(newStates[comp.id].isEnergized !== isEnergized) {
-                newStates[comp.id].isEnergized = isEnergized;
-              }
-          }
+        const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
+        if (simConfig?.energizePins && simConfig.energizePins.length === 2) {
+          const pin1 = `${comp.id}/${simConfig.energizePins[0]}`;
+          const pin2 = `${comp.id}/${simConfig.energizePins[1]}`;
+
+          const isEnergized =
+            (energizedFrom24V.has(pin1) && energizedFrom0V.has(pin2)) ||
+            (energizedFrom24V.has(pin2) && energizedFrom0V.has(pin1));
+
+          newSimCompStates[comp.id].isEnergized = isEnergized;
+        }
       });
 
-      if (JSON.stringify(currentStates) !== JSON.stringify(newStates)) {
-          hasStateChanged = true;
-      }
-
       const newConnStates = connections.reduce((acc, conn) => {
-        const isConducting = energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`);
+        const startKey = `${conn.startComponentId}/${conn.startPinName}`;
+        const endKey = `${conn.endComponentId}/${conn.endPinName}`;
+        const isConducting =
+          (energizedFrom24V.has(startKey) && energizedFrom24V.has(endKey)) ||
+          (energizedFrom0V.has(startKey) && energizedFrom0V.has(endKey));
         acc[conn.id] = { isConducting };
         return acc;
       }, {} as { [key: string]: SimulatedConnectionState });
 
-      if (JSON.stringify(simulatedConnectionStates) !== JSON.stringify(newConnStates)) {
-          setSimulatedConnectionStates(newConnStates);
-          hasStateChanged = true;
-      }
+      setSimulatedConnectionStates(newConnStates);
 
-      return hasStateChanged ? newStates : currentStates;
+      return newSimCompStates;
     });
-  }, [components, connections, simulatedConnectionStates]);
+  }, [components, connections]);
 
   useEffect(() => {
     if (isSimulating) {
-      runSimulation();
+      runSimulationStep();
     }
-  }, [isSimulating, components, connections, simulatedComponentStates, runSimulation]);
+  }, [isSimulating, components, connections, runSimulationStep]);
 
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
