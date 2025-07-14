@@ -33,15 +33,15 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     width: 80,
     height: 60,
     render: (label, _state, displayPinLabels = { '13': '13', '14': '14' }, simulatedState) => {
-        const isClosed = simulatedState?.currentContactState?.['13'] === 'closed' && simulatedState?.currentContactState?.['14'] === 'closed';
+        const isClosed = simulatedState?.currentContactState?.['13'] === 'closed';
         return (
             <>
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
                 <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
                 {isClosed ? (
-                    <line x1="25" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-200" />
+                    <line x1="25" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-100" />
                 ) : (
-                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-200" />
+                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-100" />
                 )}
                 <text x="15" y="18" className="text-pin">{displayPinLabels['13']}</text>
                 <text x="15" y="48" className="text-pin">{displayPinLabels['14']}</text>
@@ -59,18 +59,18 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     width: 80,
     height: 60,
     render: (label, _state, displayPinLabels = { '11': '11', '12': '12' }, simulatedState) => {
-        const isClosed = simulatedState?.currentContactState?.['11'] === 'closed' && simulatedState?.currentContactState?.['12'] === 'closed';
+        const isClosed = simulatedState?.currentContactState?.['11'] === 'closed';
         return (
             <>
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
                 <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
                 {isClosed ? (
                     <>
-                        <line x1="25" y1="22.5" x2="30" y2="22.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-200" />
-                        <line x1="30" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-200" />
+                        <line x1="25" y1="22.5" x2="30" y2="22.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-100" />
+                        <line x1="30" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-100" />
                     </>
                 ) : (
-                     <line x1="25" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-200" /> // Represents open for simulation
+                     <line x1="25" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-100" />
                 )}
                 <text x="15" y="18" className="text-pin">{displayPinLabels['11']}</text>
                 <text x="15" y="48" className="text-pin">{displayPinLabels['12']}</text>

@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ElectricalComponent, PaletteComponentFirebaseData, Connection, ProjectType } from '@/types/circuit';
 import { COMPONENT_DEFINITIONS } from '@/config/component-definitions';
+import { getPaletteComponentById } from '@/config/mock-palette-data';
 
 interface PropertiesSidebarProps {
   component: ElectricalComponent | null;
@@ -140,7 +141,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   };
 
 
-  if (!component && !connection) return null;
+  if (!component && !connection && !isSimulating) return null;
 
   const canEditPins = component && paletteComponent && paletteComponent.hasEditablePins;
   const pinKeysToEdit = component && paletteComponent ? Object.keys(paletteComponent.initialPinLabels || {}) : [];
@@ -153,6 +154,39 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   const endPinDef = endComponent ? COMPONENT_DEFINITIONS[endComponent.type]?.pins[connection!.endPinName] : null;
 
   const isInstallationPlan = projectType === "Installationsschaltplan";
+
+  if (isSimulating) {
+    const interactableComponents = allComponents.filter(c => {
+      const palette = getPaletteComponentById(c.firebaseComponentId);
+      return palette?.simulation?.interactable;
+    });
+
+    return (
+      <div className="h-full w-full bg-card p-4 flex flex-col rounded-lg shadow-md">
+        <ScrollArea className="flex-grow">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-card-foreground">Simulationssteuerung</h2>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close sidebar">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {interactableComponents.map(comp => (
+              <div key={comp.id} className="flex items-center justify-between">
+                <span className="text-sm text-card-foreground">{comp.label}</span>
+                <Button variant="outline" size="sm" onClick={() => onComponentClick(comp.id)}>
+                  Betätigen
+                </Button>
+              </div>
+            ))}
+            {interactableComponents.length === 0 && (
+              <p className="text-sm text-muted-foreground">Keine bedienbaren Bauteile vorhanden.</p>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full bg-card p-4 flex flex-col rounded-lg shadow-md">
