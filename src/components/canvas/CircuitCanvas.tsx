@@ -23,6 +23,7 @@ interface CircuitCanvasProps {
   simulatedComponentStates: { [key: string]: SimulatedComponentState };
   selectedConnectionId?: string | null;
   projectType?: ProjectType | null;
+  snapLines?: { x: number | null; y: number | null };
 }
 
 const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
@@ -45,7 +46,8 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   simulatedConnectionStates,
   simulatedComponentStates,
   selectedConnectionId,
-  projectType
+  projectType,
+  snapLines
 }) => {
 
   const getLineColor = (connection: Connection, isConducting: boolean) => {
@@ -172,6 +174,27 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           y2={currentMouseSvgCoords.y}
           className="line stroke-[hsl(var(--ring))] stroke-2"
           strokeDasharray="5,5"
+        />
+      )}
+
+      {snapLines && snapLines.x !== null && (
+        <line
+          x1={snapLines.x}
+          y1={0}
+          x2={snapLines.x}
+          y2={height}
+          stroke="hsl(var(--muted-foreground))"
+          strokeDasharray="4 2"
+        />
+      )}
+      {snapLines && snapLines.y !== null && (
+        <line
+          x1={0}
+          y1={snapLines.y}
+          x2={width}
+          y2={snapLines.y}
+          stroke="hsl(var(--muted-foreground))"
+          strokeDasharray="4 2"
         />
       )}
     </svg>
