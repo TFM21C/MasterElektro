@@ -158,11 +158,11 @@ const DesignerPageContent: React.FC = () => {
             const startConducts = startState.currentContactState?.[conn.startPinName] !== 'open';
             const endConducts = endState.currentContactState?.[conn.endPinName] !== 'open';
 
-            if (energizedSet.has(startKey) && startConducts && !energizedSet.has(endKey) && endConducts) {
+            if (energizedSet.has(startKey) && startConducts && !energizedSet.has(endKey)) {
               energizedSet.add(endKey);
               changed = true;
             }
-            if (energizedSet.has(endKey) && endConducts && !energizedSet.has(startKey) && startConducts) {
+            if (energizedSet.has(endKey) && endConducts && !energizedSet.has(startKey)) {
               energizedSet.add(startKey);
               changed = true;
             }
