@@ -34,6 +34,7 @@ const DesignerPageContent: React.FC = () => {
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const [connectingPin, setConnectingPin] = useState<{ componentId: string; pinName: string, coords: Point } | null>(null);
   const [currentMouseSvgCoords, setCurrentMouseSvgCoords] = useState<Point | null>(null);
+  const [snapLines, setSnapLines] = useState<{x: number | null; y: number | null}>({x: null, y: null});
   const svgRef = useRef<SVGSVGElement>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -311,28 +312,77 @@ const DesignerPageContent: React.FC = () => {
     pointInSvg.x = e.clientX;
     pointInSvg.y = e.clientY;
     const { x, y } = pointInSvg.matrixTransform(CTM.inverse());
-    
-    setCurrentMouseSvgCoords({x, y});
+
+    setCurrentMouseSvgCoords({ x, y });
 
     if (draggingComponentId && !isSimulating) {
+      const dragged = components.find(c => c.id === draggingComponentId);
+      if (!dragged) return;
+
+      let newX = x - offset.x;
+      let newY = y - offset.y;
+      let snapX: number | null = null;
+      let snapY: number | null = null;
+
+      const dragDef = COMPONENT_DEFINITIONS[dragged.type];
+      const dragScale = dragged.scale || 1;
+      const dragWidth = (dragged.width ?? dragDef.width) * dragScale;
+      const dragHeight = (dragged.height ?? dragDef.height) * dragScale;
+
+      const dragCenterX = newX + dragWidth / 2;
+      const dragCenterY = newY + dragHeight / 2;
+
+      const TOLERANCE = 5;
+
+      components.forEach(comp => {
+        if (comp.id === dragged.id) return;
+        const def = COMPONENT_DEFINITIONS[comp.type];
+        const scale = comp.scale || 1;
+        const width = (comp.width ?? def.width) * scale;
+        const height = (comp.height ?? def.height) * scale;
+        const compCenterX = comp.x + width / 2;
+        const compCenterY = comp.y + height / 2;
+
+        if (Math.abs(newX - comp.x) <= TOLERANCE) {
+          newX = comp.x;
+          snapX = comp.x;
+        } else if (Math.abs(dragCenterX - compCenterX) <= TOLERANCE) {
+          newX = compCenterX - dragWidth / 2;
+          snapX = compCenterX;
+        }
+
+        if (Math.abs(newY - comp.y) <= TOLERANCE) {
+          newY = comp.y;
+          snapY = comp.y;
+        } else if (Math.abs(dragCenterY - compCenterY) <= TOLERANCE) {
+          newY = compCenterY - dragHeight / 2;
+          snapY = compCenterY;
+        }
+      });
+
+      setSnapLines({ x: snapX, y: snapY });
+
       setComponents(prevComponents =>
         prevComponents.map(comp =>
-          comp.id === draggingComponentId
-            ? { ...comp, x: x - offset.x, y: y - offset.y }
-            : comp
+          comp.id === draggingComponentId ? { ...comp, x: newX, y: newY } : comp
         )
       );
     } else if (draggingWaypoint) {
-        setConnections(prev => prev.map(conn => {
-            if (conn.id === draggingWaypoint.connectionId) {
-                const newWaypoints = [...(conn.waypoints || [])];
-                newWaypoints[draggingWaypoint.waypointIndex] = { x, y };
-                return { ...conn, waypoints: newWaypoints };
-            }
-            return conn;
-        }));
+      setConnections(prev =>
+        prev.map(conn => {
+          if (conn.id === draggingWaypoint.connectionId) {
+            const newWaypoints = [...(conn.waypoints || [])];
+            newWaypoints[draggingWaypoint.waypointIndex] = { x, y };
+            return { ...conn, waypoints: newWaypoints };
+          }
+          return conn;
+        })
+      );
+      setSnapLines({ x: null, y: null });
+    } else {
+      setSnapLines({ x: null, y: null });
     }
-  }, [draggingComponentId, offset, isSimulating, draggingWaypoint]);
+  }, [draggingComponentId, offset, isSimulating, draggingWaypoint, components]);
 
   const handleMouseUpGlobal = useCallback(() => {
     if (isSimulating) {
@@ -340,6 +390,7 @@ const DesignerPageContent: React.FC = () => {
     }
     setDraggingComponentId(null);
     setDraggingWaypoint(null);
+    setSnapLines({ x: null, y: null });
   }, [isSimulating, handleComponentMouseUpInSim]);
 
 
@@ -595,12 +646,26 @@ const DesignerPageContent: React.FC = () => {
     }
 
 
+    let initX = 100 + Math.random() * 50;
+    let initY = 100 + Math.random() * 50;
+
+    if (projectType === "Steuerstromkreis") {
+      if (paletteItem.type === "24V" && !components.some(c => c.type === "24V")) {
+        initX = 50;
+        initY = 50;
+      }
+      if (paletteItem.type === "0V" && !components.some(c => c.type === "0V")) {
+        initX = 50;
+        initY = 400;
+      }
+    }
+
     const newComponent: ElectricalComponent = {
       id: newId,
       type: paletteItem.type,
       firebaseComponentId: paletteItem.id,
-      x: 100 + Math.random() * 50,
-      y: 100 + Math.random() * 50,
+      x: initX,
+      y: initY,
       label: newLabel,
       state: definition?.initialState ? { ...definition.initialState } : undefined,
       displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
@@ -612,7 +677,7 @@ const DesignerPageContent: React.FC = () => {
     setSelectedComponentForSidebar(newComponent);
     setSelectedConnectionId(null);
     setIsPropertiesSidebarOpen(true);
-  }, [isSimulating, components, toast]);
+  }, [isSimulating, components, toast, projectType]);
 
   const confirmDelete = useCallback((type: 'component' | 'connection' | 'waypoint', id: string, waypointIndex?: number) => {
     if (isSimulating) {
@@ -740,6 +805,7 @@ const DesignerPageContent: React.FC = () => {
             simulatedComponentStates={simulatedComponentStates}
             selectedConnectionId={selectedConnectionId}
             projectType={projectType}
+            snapLines={snapLines}
           />
         </div>
 
