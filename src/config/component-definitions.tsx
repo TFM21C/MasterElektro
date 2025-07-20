@@ -507,4 +507,136 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       'out': { x: 15, y: 29, label: 'out' }
     }
   },
+  'Serienschalter': {
+    width: 40,
+    height: 30,
+    render: (label, _state, _displayPinLabels, simulatedState) => {
+      const closed1 = simulatedState?.currentContactState?.['1'] === 'closed';
+      const closed2 = simulatedState?.currentContactState?.['2'] === 'closed';
+      return (
+        <>
+          <rect x="1" y="1" width="38" height="28" className="symbol stroke-2" />
+          <line x1="12" y1="5" x2="12" y2="25" className="line" />
+          <line x1="12" y1="10" x2="16" y2="10" className="line" strokeWidth="1.5" />
+          <line x1="24" y1="10" x2="28" y2="10" className="line" strokeWidth="1.5" />
+          {closed1 ? (
+            <line x1="16" y1="10" x2="24" y2="10" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          ) : (
+            <line x1="16" y1="6" x2="24" y2="10" className="line" strokeWidth="1.5" />
+          )}
+          <line x1="12" y1="20" x2="16" y2="20" className="line" strokeWidth="1.5" />
+          <line x1="24" y1="20" x2="28" y2="20" className="line" strokeWidth="1.5" />
+          {closed2 ? (
+            <line x1="16" y1="20" x2="24" y2="20" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          ) : (
+            <line x1="16" y1="16" x2="24" y2="20" className="line" strokeWidth="1.5" />
+          )}
+          <text x="20" y="35" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'L': { x: 0, y: 15, label: 'L' },
+      '1': { x: 40, y: 10, label: '1' },
+      '2': { x: 40, y: 20, label: '2' }
+    },
+    initialDisplayPinLabels: { 'L': 'L', '1': '1', '2': '2' }
+  },
+  'Kreuzschalter': {
+    width: 40,
+    height: 30,
+    render: (label, _state, _displayPinLabels, simulatedState) => {
+      const isCross = simulatedState?.currentContactState?.cross === 'closed';
+      return (
+        <>
+          <rect x="1" y="1" width="38" height="28" className="symbol stroke-2" />
+          {isCross ? (
+            <>
+              <line x1="5" y1="10" x2="35" y2="20" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+              <line x1="5" y1="20" x2="35" y2="10" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+              <line x1="5" y1="10" x2="35" y2="10" className="line" strokeWidth="1.5" />
+              <line x1="5" y1="20" x2="35" y2="20" className="line" strokeWidth="1.5" />
+            </>
+          ) : (
+            <>
+              <line x1="5" y1="10" x2="35" y2="10" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+              <line x1="5" y1="20" x2="35" y2="20" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+              <line x1="5" y1="10" x2="35" y2="20" className="line" strokeWidth="1.5" />
+              <line x1="5" y1="20" x2="35" y2="10" className="line" strokeWidth="1.5" />
+            </>
+          )}
+          <text x="20" y="35" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      '1': { x: 0, y: 10, label: '1' },
+      '2': { x: 0, y: 20, label: '2' },
+      '3': { x: 40, y: 10, label: '3' },
+      '4': { x: 40, y: 20, label: '4' }
+    },
+    initialDisplayPinLabels: { '1': '1', '2': '2', '3': '3', '4': '4' }
+  },
+  'SchalterSteckdoseKombi': {
+    width: 30,
+    height: 60,
+    render: (label, _state, _displayPinLabels, simulatedState) => {
+      const isClosed = simulatedState?.currentContactState?.SchaltOut === 'closed';
+      return (
+        <>
+          <rect x="1" y="1" width="28" height="58" className="symbol stroke-2" />
+          <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          {isClosed ? (
+            <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          ) : (
+            <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
+          )}
+          <circle cx="15" cy="45" r="14" className="symbol stroke-2" />
+          <circle cx="11" cy="43" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+          <circle cx="19" cy="43" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+          <circle cx="15" cy="48" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+          <text x="15" y="68" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'SchalterL': { x: 15, y: 1, label: 'L' },
+      'SchaltOut': { x: 15, y: 29, label: '1' },
+      'L': { x: 1, y: 45, label: 'L' },
+      'N': { x: 29, y: 45, label: 'N' },
+      'PE': { x: 15, y: 59, label: 'PE' }
+    },
+    initialDisplayPinLabels: { 'SchalterL': 'L', 'SchaltOut': '1', 'L': 'L', 'N': 'N', 'PE': 'PE' }
+  },
+  'TasterKontrolllicht': {
+    width: 30,
+    height: 40,
+    render: (label, _state, _displayPinLabels, simulatedState) => {
+      const isPressed = simulatedState?.currentContactState?.Out === 'closed';
+      const lampOn = simulatedState?.isEnergized;
+      return (
+        <>
+          <rect x="1" y="1" width="28" height="38" className="symbol stroke-2" />
+          <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          {isPressed ? (
+            <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          ) : (
+            <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
+          )}
+          <circle cx="23" cy="15" r="4" className="symbol stroke-2" style={{ fill: lampOn ? 'yellow' : 'hsl(var(--card))' }} />
+          <line x1="20" y1="12" x2="26" y2="18" stroke="black" strokeWidth="1" fill="none" />
+          <line x1="20" y1="18" x2="26" y2="12" stroke="black" strokeWidth="1" fill="none" />
+          <text x="15" y="46" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'L': { x: 15, y: 1, label: 'L' },
+      'Out': { x: 15, y: 39, label: 'Out' },
+      'N': { x: 29, y: 20, label: 'N' }
+    },
+    initialDisplayPinLabels: { 'L': 'L', 'Out': 'Out', 'N': 'N' }
+  },
 };
