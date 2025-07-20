@@ -94,6 +94,11 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
       );
       break;
+    case 'AbzweigdoseRect':
+      iconContent = (
+        <rect x="6" y="10" width="28" height="20" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+      );
+      break;
     case 'SchliesserInstallation':
       iconContent = (
         <>

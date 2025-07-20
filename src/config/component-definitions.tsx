@@ -249,6 +249,22 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       'W': { x: 1, y: 25, label: 'W' },   // West
     }
   },
+  'AbzweigdoseRect': {
+    width: 50,
+    height: 40,
+    render: (label) => (
+      <>
+        <rect x="1" y="1" width="48" height="38" fill="transparent" stroke="black" strokeWidth="2" />
+        <text x="25" y="-5" textAnchor="middle" className="component-text text-xs">{label}</text>
+      </>
+    ),
+    pins: {
+      'N': { x: 25, y: 0, label: 'N' },
+      'E': { x: 50, y: 20, label: 'E' },
+      'S': { x: 25, y: 40, label: 'S' },
+      'W': { x: 0, y: 20, label: 'W' },
+    }
+  },
   'SchliesserInstallation': {
     width: 30,
     height: 30,

@@ -426,6 +426,26 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     }
   },
   {
+    id: 'abzweigdose_rect',
+    name: 'Abzweigdose (Rechteck)',
+    type: 'AbzweigdoseRect',
+    abbreviation: 'X',
+    defaultLabelPrefix: 'X',
+    category: 'Installationselemente',
+    description: 'Rechteckige Abzweigdose zur Verdrahtung.',
+    hasToggleState: false,
+    hasEditablePins: false,
+    initialPinLabels: { 'N': 'N', 'E': 'E', 'S': 'S', 'W': 'W' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['AbzweigdoseRect']?.width || 50, height: COMPONENT_DEFINITIONS['AbzweigdoseRect']?.height || 40 },
+    minScale: 0.8, maxScale: 1.5, scaleStep: 0.1,
+    simulation: {
+      interactable: false,
+      controlLogic: 'pass_through',
+      controlledBy: 'voltage',
+    }
+  },
+  {
     id: 'taster_schliesser_install',
     name: 'Taster (Installation)',
     type: 'SchliesserInstallation',
