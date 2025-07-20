@@ -1,6 +1,7 @@
 import type React from 'react';
 import DraggableComponent from '@/components/circuit/DraggableComponent';
 import type { ElectricalComponent, Connection, Point, SimulatedConnectionState, SimulatedComponentState, ProjectType } from '@/types/circuit';
+import { renderView } from '@/lib/view-renderer';
 
 interface CircuitCanvasProps {
   svgRef: React.RefObject<SVGSVGElement>;
@@ -60,6 +61,12 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   selectedComponentIds
 }) => {
 
+  const viewData = projectType
+    ? renderView(components, connections, projectType)
+    : { components, connections };
+  const viewComponents = viewData.components;
+  const viewConnections = viewData.connections;
+
   const getLineColor = (connection: Connection, isConducting: boolean) => {
     if (isSimulating) {
       return isConducting ? 'hsl(var(--destructive))' : 'hsl(var(--primary-foreground))';
@@ -85,7 +92,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
       onMouseDown={onCanvasMouseDown}
     >
-      {components.map(comp => (
+      {viewComponents.map(comp => (
         <DraggableComponent
           key={comp.id}
           component={comp}
@@ -101,7 +108,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         />
       ))}
 
-      {connections.map(conn => {
+      {viewConnections.map(conn => {
         const startCoords = getAbsolutePinCoordinates(conn.startComponentId, conn.startPinName);
         const endCoords = getAbsolutePinCoordinates(conn.endComponentId, conn.endPinName);
 
@@ -113,6 +120,45 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         
         const pathPoints = [startCoords, ...(conn.waypoints || []), endCoords];
         const linePath = pathPoints.map((p, i) => (i === 0 ? 'M' : 'L') + ` ${p.x} ${p.y}`).join(' ');
+
+        const renderOverviewTicks = () => {
+          if (projectType !== 'Übersichtsschaltplan') return null;
+          const num = conn.totalWires ?? conn.numberOfWires ?? 1;
+          if (num < 2) return null;
+
+          const midIndex = Math.floor(pathPoints.length / 2);
+          const start = pathPoints[midIndex - 1] || pathPoints[0];
+          const end = pathPoints[midIndex] || pathPoints[pathPoints.length - 1];
+          const mx = (start.x + end.x) / 2;
+          const my = (start.y + end.y) / 2;
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const nx = -dy / len; // perpendicular normal
+          const ny = dx / len;
+          const tickLen = 6;
+          const spacing = 8;
+
+          const tickElements = Array.from({ length: num }, (_, i) => {
+            const offset = (i - (num - 1) / 2) * spacing;
+            const cx = mx + nx * offset;
+            const cy = my + ny * offset;
+            const x1 = cx - nx * tickLen / 2;
+            const y1 = cy - ny * tickLen / 2;
+            const x2 = cx + nx * tickLen / 2;
+            const y2 = cy + ny * tickLen / 2;
+            return <line key={`tick-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={strokeColor} strokeWidth={1} />;
+          });
+
+          const textX = mx + nx * ((num - 1) / 2 * spacing + 10);
+          const textY = my + ny * ((num - 1) / 2 * spacing + 10);
+          return (
+            <g>
+              {tickElements}
+              <text x={textX} y={textY} fontSize="10px" fill={strokeColor}>{num}</text>
+            </g>
+          );
+        };
 
         return (
           <g key={conn.id} >
@@ -157,7 +203,8 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               style={{ cursor: isMeasuring ? 'crosshair' : 'pointer' }}
             />
-             {!isSimulating && conn.waypoints?.map((wp, index) => (
+            {renderOverviewTicks()}
+            {!isSimulating && conn.waypoints?.map((wp, index) => (
                 <circle
                     key={index}
                     cx={wp.x}
