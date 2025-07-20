@@ -52,6 +52,8 @@ export interface PaletteComponentFirebaseData {
   initialPinLabels: Record<string, string>;
   paletteIconType?: string;
 
+  voltageType?: 'DC_POSITIVE' | 'DC_NEGATIVE' | 'AC_L' | 'NEUTRAL' | 'PE';
+
   resizable?: boolean;
   defaultSize?: { width: number; height: number };
   minScale?: number;
