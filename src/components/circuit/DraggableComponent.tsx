@@ -14,6 +14,7 @@ interface DraggableComponentProps {
   isMeasuring?: boolean;
   simulatedState?: SimulatedComponentState;
   selected?: boolean;
+  highlighted?: boolean;
 }
 
 const DraggableComponent: React.FC<DraggableComponentProps> = ({
@@ -27,6 +28,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   isMeasuring,
   simulatedState,
   selected,
+  highlighted,
 }) => {
   const definition = COMPONENT_DEFINITIONS[component.type];
   if (!definition) return null;
@@ -110,6 +112,18 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
           fill="none"
           stroke="hsl(var(--ring))"
           strokeDasharray="4 2"
+          pointerEvents="none"
+        />
+      )}
+      {!selected && highlighted && (
+        <rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill="none"
+          stroke="hsl(var(--ring))"
+          strokeDasharray="2 2"
           pointerEvents="none"
         />
       )}

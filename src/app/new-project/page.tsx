@@ -40,6 +40,7 @@ const DesignerPageContent: React.FC = () => {
 
   // States for group selection
   const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
+  const [highlightedComponentIds, setHighlightedComponentIds] = useState<string[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<Point | null>(null);
   const [selectionRect, setSelectionRect] = useState<{x:number; y:number; width:number; height:number} | null>(null);
@@ -671,6 +672,21 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedComponentIds.length === 0) {
+      setHighlightedComponentIds([]);
+      return;
+    }
+    const first = components.find(c => c.id === selectedComponentIds[0]);
+    if (!first) {
+      setHighlightedComponentIds([]);
+      return;
+    }
+    const label = first.label;
+    const matches = components.filter(c => c.label === label).map(c => c.id);
+    setHighlightedComponentIds(matches);
+  }, [selectedComponentIds, components]);
+
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
       let newSimulatingState = !prev;
@@ -1157,6 +1173,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             snapLines={snapLines}
             selectionRect={selectionRect}
             selectedComponentIds={selectedComponentIds}
+            highlightedComponentIds={highlightedComponentIds}
             onDropComponent={addComponentAtPosition}
           />
         </div>
