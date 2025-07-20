@@ -60,20 +60,25 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     width: 80,
     height: 60,
     render: (label, _state, displayPinLabels = { '11': '11', '12': '12' }, simulatedState) => {
+        // isClosed ist 'true' im Ruhezustand eines Öffners (Normally Closed)
         const isClosed = simulatedState?.currentContactState?.['11'] === 'closed' &&
-                          simulatedState?.currentContactState?.['12'] === 'closed';
+                         simulatedState?.currentContactState?.['12'] === 'closed';
         return (
             <>
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
                 <line x1="25" y1="37.5" x2="25" y2="60" className="line" />
+
                 {isClosed ? (
-                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-100" />
-                ) : (
+                    // RUHEZUSTAND: Zeichne geschlossenen Kontakt
                     <>
                         <line x1="25" y1="22.5" x2="30" y2="22.5" className="line transition-all duration-100" />
                         <line x1="30" y1="22.5" x2="25" y2="37.5" className="line transition-all duration-100" />
                     </>
+                ) : (
+                    // BETÄTIGTER ZUSTAND: Zeichne offenen Kontakt (schräge Linie)
+                    <line x1="15" y1="22.5" x2="25" y2="37.5" className="line stroke-[hsl(var(--destructive))] stroke-2 transition-all duration-100" />
                 )}
+
                 <text x="15" y="18" className="text-pin">{displayPinLabels['11']}</text>
                 <text x="15" y="48" className="text-pin">{displayPinLabels['12']}</text>
                 <text x="55" y="30" className="component-text">{label}</text>
