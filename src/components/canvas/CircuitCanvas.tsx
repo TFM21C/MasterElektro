@@ -136,8 +136,23 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         const strokeColor = getLineColor(conn, !!isConducting);
         const strokeWidth = conn.id === selectedConnectionId && !isSimulating ? 3 : (isSimulating && isConducting ? 2.5 : 1.5);
         
-        const pathPoints = [startCoords, ...(conn.waypoints || []), endCoords];
-        const linePath = pathPoints.map((p, i) => (i === 0 ? 'M' : 'L') + ` ${p.x} ${p.y}`).join(' ');
+        let pathPoints = [startCoords, ...(conn.waypoints || []), endCoords];
+        // Auto-route connections in the overview plan when no waypoints are set.
+        if (projectType === 'Übersichtsschaltplan' && pathPoints.length === 2) {
+          const GRID = 25; // step grid size in SVG units
+          const snap = (v: number) => Math.round(v / GRID) * GRID;
+          const s = { x: snap(startCoords.x), y: snap(startCoords.y) };
+          const e = { x: snap(endCoords.x), y: snap(endCoords.y) };
+          // Choose the shorter orthogonal path
+          if (Math.abs(s.x - e.x) < Math.abs(s.y - e.y)) {
+            pathPoints = [s, { x: s.x, y: e.y }, e];
+          } else {
+            pathPoints = [s, { x: e.x, y: s.y }, e];
+          }
+        }
+        const linePath = pathPoints
+          .map((p, i) => (i === 0 ? 'M' : 'L') + ` ${p.x} ${p.y}`)
+          .join(' ');
 
         const renderOverviewTicks = () => {
           if (projectType !== 'Übersichtsschaltplan') return null;
