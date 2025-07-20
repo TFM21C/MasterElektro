@@ -94,7 +94,7 @@ const DesignerPageContent: React.FC = () => {
         }
       });
 
-      // 2. Sets für beide Strompfade erstellen
+      // 2. Stromausbreitung simulieren
       const energizedFrom24V = new Set<string>();
       const energizedFrom0V = new Set<string>();
 
@@ -107,9 +107,22 @@ const DesignerPageContent: React.FC = () => {
         for (let i = 0; i < (components.length + connections.length) * 2; i++) {
           let changed = false;
 
-          // -----------------------------
-          // 1. Internal propagation
-          // -----------------------------
+          // Externe Ausbreitung über Verbindungen
+          connections.forEach(conn => {
+            const startKey = `${conn.startComponentId}/${conn.startPinName}`;
+            const endKey = `${conn.endComponentId}/${conn.endPinName}`;
+
+            if (energizedSet.has(startKey) && !energizedSet.has(endKey)) {
+              energizedSet.add(endKey);
+              changed = true;
+            }
+            if (energizedSet.has(endKey) && !energizedSet.has(startKey)) {
+              energizedSet.add(startKey);
+              changed = true;
+            }
+          });
+
+          // Interne Ausbreitung innerhalb von Bauteilen
           components.forEach(comp => {
             const compState = newSimCompStates[comp.id];
             const compDef = COMPONENT_DEFINITIONS[comp.type];
@@ -121,11 +134,8 @@ const DesignerPageContent: React.FC = () => {
                 const pinA = pins[a];
                 const pinB = pins[b];
 
-                const stateA = compState.currentContactState?.[pinA];
-                const stateB = compState.currentContactState?.[pinB];
-
-                const aConducts = stateA !== 'open';
-                const bConducts = stateB !== 'open';
+                const aConducts = compState.currentContactState?.[pinA] !== 'open';
+                const bConducts = compState.currentContactState?.[pinB] !== 'open';
 
                 if (aConducts && bConducts) {
                   const keyA = `${comp.id}/${pinA}`;
@@ -144,31 +154,6 @@ const DesignerPageContent: React.FC = () => {
             }
           });
 
-          // -----------------------------
-          // 2. External propagation
-          // -----------------------------
-          connections.forEach(conn => {
-            const startKey = `${conn.startComponentId}/${conn.startPinName}`;
-            const endKey = `${conn.endComponentId}/${conn.endPinName}`;
-
-            const startState = newSimCompStates[conn.startComponentId];
-            const endState = newSimCompStates[conn.endComponentId];
-            if (!startState || !endState) return;
-
-            const startConducts = startState.currentContactState?.[conn.startPinName] !== 'open';
-            const endConducts = endState.currentContactState?.[conn.endPinName] !== 'open';
-
-            if (energizedSet.has(startKey) && startConducts && !energizedSet.has(endKey)) {
-              energizedSet.add(endKey);
-              changed = true;
-            }
-            if (energizedSet.has(endKey) && endConducts && !energizedSet.has(startKey)) {
-              energizedSet.add(startKey);
-              changed = true;
-            }
-          });
-
-          // If no changes happened in this iteration, the state is stable
           if (!changed) break;
         }
       };
@@ -194,19 +179,20 @@ const DesignerPageContent: React.FC = () => {
       const newConnStates = connections.reduce((acc, conn) => {
         const startKey = `${conn.startComponentId}/${conn.startPinName}`;
         const endKey = `${conn.endComponentId}/${conn.endPinName}`;
-        const isConducting =
-          (energizedFrom24V.has(startKey) && energizedFrom24V.has(endKey)) ||
-          (energizedFrom0V.has(startKey) && energizedFrom0V.has(endKey));
+
+        const startCompState = newSimCompStates[conn.startComponentId];
+        const endCompState = newSimCompStates[conn.endComponentId];
+
+        const startConducts = startCompState?.currentContactState?.[conn.startPinName] !== 'open';
+        const endConducts = endCompState?.currentContactState?.[conn.endPinName] !== 'open';
+
+        const isConducting = (energizedFrom24V.has(startKey) && startConducts && energizedFrom24V.has(endKey) && endConducts) || (energizedFrom0V.has(startKey) && startConducts && energizedFrom0V.has(endKey) && endConducts);
+
         acc[conn.id] = { isConducting };
         return acc;
       }, {} as { [key: string]: SimulatedConnectionState });
 
-      setSimulatedConnectionStates(currentConnStates => {
-        if (JSON.stringify(newConnStates) !== JSON.stringify(currentConnStates)) {
-          return newConnStates;
-        }
-        return currentConnStates;
-      });
+      setSimulatedConnectionStates(newConnStates);
 
       if (JSON.stringify(newSimCompStates) !== JSON.stringify(currentSimStates)) {
         return newSimCompStates;
