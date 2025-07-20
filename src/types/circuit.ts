@@ -89,6 +89,7 @@ export interface Connection {
   endPinName: string;
   color?: string; // For Installationsschaltplan
   numberOfWires?: number; // For Installationsschaltplan
+  totalWires?: number; // For aggregated overview lines
   waypoints?: Point[]; // For Installationsschaltplan
 }
 
