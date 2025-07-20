@@ -230,6 +230,20 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           {m.value}
         </text>
       ))}
+
+      {/* Strompfad-Nummerierung am unteren Rand */}
+      {Array.from({ length: Math.floor(viewBoxWidth / 25) }, (_, i) => i + 1).map(num => (
+        <text
+          key={`path-${num}`}
+          x={num * 25 - 12.5}
+          y={viewBoxHeight - 5}
+          fontSize="10px"
+          textAnchor="middle"
+          fill="hsl(var(--muted-foreground))"
+        >
+          {num}
+        </text>
+      ))}
     </svg>
   );
 };
