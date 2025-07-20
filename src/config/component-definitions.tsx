@@ -156,6 +156,7 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 75,
     render: (label, _state, displayPinLabels = { 'X1': 'X1', 'X2': 'X2' }, simulatedState) => (
       <>
+        <rect x="12.5" y="12.5" width="50" height="50" fill="none" stroke="black" strokeWidth={1.5} />
         <circle
             cx="37.5"
             cy="37.5"
@@ -238,7 +239,7 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 50,
     render: (label) => (
       <>
-        <circle cx="25" cy="25" r="24" className="symbol stroke-2" />
+        <rect x="1" y="1" width="48" height="48" fill="none" stroke="black" strokeDasharray="4 2" />
         <text x="25" y="60" textAnchor="middle" className="component-text text-xs">{label}</text>
       </>
     ),
