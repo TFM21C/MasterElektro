@@ -53,7 +53,9 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
 
   const handleParentChange = (newParentId: string) => {
     if (component) {
-      onUpdateComponent(component.id, { parentId: newParentId || null });
+      onUpdateComponent(component.id, {
+        parentId: newParentId === 'none' ? null : newParentId,
+      });
     }
   };
 
@@ -236,14 +238,14 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                   Gesteuert von:
                 </Label>
                 <Select
-                  value={component.parentId || ''}
+                  value={component.parentId || 'none'}
                   onValueChange={handleParentChange}
                 >
                   <SelectTrigger id="parent-select" className="mt-1">
                     <SelectValue placeholder="Steuernde Spule wählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Keine</SelectItem>
+                    <SelectItem value="none">Keine</SelectItem>
                     {controllingOptions.map(opt => (
                       <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
                     ))}
