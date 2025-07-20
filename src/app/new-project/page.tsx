@@ -71,9 +71,9 @@ const DesignerPageContent: React.FC = () => {
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
   const [isMeasuring, setIsMeasuring] = useState(false);
+  const [measurements, setMeasurements] = useState<{id: number, x: number, y: number, value: string}[]>([]);
   const [showGrid, setShowGrid] = useState(false);
   const [simulationErrors, setSimulationErrors] = useState<string[]>([]);
-  const [measurements, setMeasurements] = useState<{id: number, x: number, y: number, value: string}[]>([]);
 
   const filteredPaletteComponents = React.useMemo(() => {
     return MOCK_PALETTE_COMPONENTS.filter(comp => {
@@ -337,7 +337,7 @@ const DesignerPageContent: React.FC = () => {
       }
       return currentSimStates;
     });
-  }, [components, connections]);
+  }, [components, connections, checkShortCircuits]);
 
   // Trigger simulation whenever component states change while simulation is active
   useEffect(() => {
@@ -440,7 +440,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       }
     }
   };
-  
+
   const handleWaypointMouseDown = useCallback((connectionId: string, waypointIndex: number) => {
       if (isSimulating) return;
       setDraggingWaypoint({connectionId, waypointIndex});
@@ -1051,7 +1051,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             showGrid={showGrid}
             snapLines={snapLines}
             selectionRect={selectionRect}
-          selectedComponentIds={selectedComponentIds}
+            selectedComponentIds={selectedComponentIds}
           />
         </div>
 
@@ -1080,22 +1080,22 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
 
       {isPropertiesSidebarOpen && (selectedComponentForSidebar || selectedConnectionId) && (
         <div className={`transition-all duration-300 ease-in-out ${isPropertiesSidebarOpen ? 'w-80' : 'w-0'} overflow-hidden shrink-0`}>
-             <PropertiesSidebar
-                component={selectedComponentForSidebar}
-                paletteComponent={selectedComponentForSidebar ? getPaletteComponentById(selectedComponentForSidebar.firebaseComponentId) : undefined}
-                connection={selectedConnectionId ? connections.find(c => c.id === selectedConnectionId) : undefined}
-                allComponents={components}
-                connections={connections}
-                onClose={handleClosePropertiesSidebar}
-                onUpdateComponent={handleUpdateComponentFromSidebar}
-                onDeleteComponent={(id) => confirmDelete('component', id)}
-                onDeleteConnection={handleDeleteConnectionFromSidebar}
-                onUpdateConnectionEndpoint={handleUpdateConnectionEndpoint}
-                onUpdateConnection={handleUpdateConnection}
-                onComponentClick={handleComponentClick}
-                isSimulating={isSimulating}
-                projectType={projectType}
-              />
+          <PropertiesSidebar
+            component={selectedComponentForSidebar}
+            paletteComponent={selectedComponentForSidebar ? getPaletteComponentById(selectedComponentForSidebar.firebaseComponentId) : undefined}
+            connection={selectedConnectionId ? connections.find(c => c.id === selectedConnectionId) : undefined}
+            allComponents={components}
+            connections={connections}
+            onClose={handleClosePropertiesSidebar}
+            onUpdateComponent={handleUpdateComponentFromSidebar}
+            onDeleteComponent={(id) => confirmDelete('component', id)}
+            onDeleteConnection={handleDeleteConnectionFromSidebar}
+            onUpdateConnectionEndpoint={handleUpdateConnectionEndpoint}
+            onUpdateConnection={handleUpdateConnection}
+            onComponentClick={handleComponentClick}
+            isSimulating={isSimulating}
+            projectType={projectType}
+          />
         </div>
       )}
 
