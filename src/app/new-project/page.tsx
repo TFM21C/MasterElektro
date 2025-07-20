@@ -84,6 +84,7 @@ const DesignerPageContent: React.FC = () => {
       if (projectType === "Installationsschaltplan") {
         return (
           comp.category === "Installationselemente" ||
+          comp.category === "Schalter" ||
           comp.category === "Energieversorgung" ||
           comp.category === "Sensoren"
         );
@@ -104,6 +105,7 @@ const DesignerPageContent: React.FC = () => {
           comp.category === "Hauptstromkreis" ||
           comp.category === "Energieversorgung" ||
           comp.category === "Installationselemente" ||
+          comp.category === "Schalter" ||
           comp.category?.includes("Steuerstrom")
         );
       }
@@ -113,7 +115,8 @@ const DesignerPageContent: React.FC = () => {
         comp.category === "Energieversorgung" ||
         comp.category === "Befehlsgeräte" ||
         comp.category === "Speichernde / Verarbeitende" ||
-        comp.category === "Stellglieder"
+        comp.category === "Stellglieder" ||
+        comp.category === "Schalter"
       );
     });
   }, [projectType]);
