@@ -92,6 +92,13 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
       onMouseDown={onCanvasMouseDown}
     >
+      {projectType === 'Stromlaufplan in zusammenhängender Darstellung' && (
+        <g pointerEvents="none">
+          <line x1="25" y1="0" x2="25" y2={viewBoxHeight} stroke="red" strokeWidth="2" />
+          <line x1="45" y1="0" x2="45" y2={viewBoxHeight} stroke="blue" strokeWidth="2" />
+          <line x1="65" y1="0" x2="65" y2={viewBoxHeight} stroke="greenyellow" strokeWidth="2" strokeDasharray="4 2" />
+        </g>
+      )}
       {viewComponents.map(comp => (
         <DraggableComponent
           key={comp.id}

@@ -72,6 +72,8 @@ const DesignerPageContent: React.FC = () => {
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
   const [isMeasuring, setIsMeasuring] = useState(false);
   const [measurements, setMeasurements] = useState<{id: number, x: number, y: number, value: string}[]>([]);
+  const [showGrid, setShowGrid] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
   const filteredPaletteComponents = React.useMemo(() => {
     return MOCK_PALETTE_COMPONENTS.filter(comp => {
@@ -81,6 +83,10 @@ const DesignerPageContent: React.FC = () => {
           comp.category === "Energieversorgung" ||
           comp.category === "Sensoren"
         );
+      }
+      if (projectType === "Stromlaufplan in zusammenhängender Darstellung") {
+        const allowed = ['sicherung', 'abzweigdose_rect', 'lampe_install', 'steckdose_install', 'wechselschalter_install'];
+        return allowed.includes(comp.id);
       }
       if (projectType === "Hauptstromkreis") {
         return (
@@ -124,6 +130,25 @@ const DesignerPageContent: React.FC = () => {
 
 
   const runSimulationStep = useCallback(() => {
+    if (projectType === 'Stromlaufplan in zusammenhängender Darstellung') {
+      for (const conn of connections) {
+        const startComp = components.find(c => c.id === conn.startComponentId);
+        const endComp = components.find(c => c.id === conn.endComponentId);
+        if (!startComp || !endComp) continue;
+        const a = startComp.type;
+        const b = endComp.type;
+        const lA = a.startsWith('L');
+        const lB = b.startsWith('L');
+        const nA = a === 'N' || a === 'PE';
+        const nB = b === 'N' || b === 'PE';
+        if ((lA && nB) || (lB && nA)) {
+          setErrors([`ERROR: Kurzschluss zwischen ${startComp.label} und ${endComp.label} erkannt.`]);
+          setIsSimulating(false);
+          return;
+        }
+      }
+    }
+    setErrors([]);
     setSimulatedComponentStates(currentSimStates => {
       let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
 
@@ -980,10 +1005,13 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
                 <Button variant="outline" size="sm" onClick={zoomOut}>
                     <ZoomOut className="mr-2 h-4 w-4" />
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowGrid(p => !p)}>
+                    Gitter
+                </Button>
             </div>
         </div>
 
-        <div className="flex-grow p-4 overflow-auto relative min-h-0">
+        <div className={`flex-grow p-4 overflow-auto relative min-h-0 ${showGrid ? 'karo-grid' : ''}`}>
           <CircuitCanvas
             svgRef={svgRef}
             components={components}
@@ -1010,8 +1038,13 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             projectType={projectType}
             snapLines={snapLines}
             selectionRect={selectionRect}
-            selectedComponentIds={selectedComponentIds}
-          />
+          selectedComponentIds={selectedComponentIds}
+        />
+        {isSimulating && errors.length > 0 && (
+          <div className="p-2 bg-red-100 text-red-800 text-sm border border-red-300 mt-2 rounded">
+            {errors.map((e, i) => <div key={i}>{e}</div>)}
+          </div>
+        )}
         </div>
 
         <Accordion type="single" collapsible className="w-full p-4 border-t border-border">
