@@ -23,7 +23,7 @@ interface PropertiesSidebarProps {
   onDeleteConnection: (connectionId: string) => void;
   onUpdateConnectionEndpoint: (connectionId: string, newEndComponentId: string, newEndPinName: string) => void;
   onUpdateConnection: (connectionId: string, updates: Partial<Connection>) => void;
-  onComponentClick: (id: string) => void;
+  onComponentClick: (id: string, isDoubleClick?: boolean, clickCoords?: {x:number, y:number}) => void;
   isSimulating?: boolean;
   projectType?: ProjectType | null;
 }
@@ -150,8 +150,8 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
 
   const startComponent = connection ? allComponents.find(c => c.id === connection.startComponentId) : null;
   const endComponent = connection ? allComponents.find(c => c.id === connection.endComponentId) : null;
-  const startPinDef = startComponent ? COMPONENT_DEFINITIONS[startComponent.type]?.pins[connection!.startPinName] : null;
-  const endPinDef = endComponent ? COMPONENT_DEFINITIONS[endComponent.type]?.pins[connection!.endPinName] : null;
+  const startPinDef = startComponent ? COMPONENT_DEFINITIONS[startComponent.type]?.pins?.[connection!.startPinName] : null;
+  const endPinDef = endComponent ? COMPONENT_DEFINITIONS[endComponent.type]?.pins?.[connection!.endPinName] : null;
 
   const isInstallationPlan = projectType === "Installationsschaltplan";
 
