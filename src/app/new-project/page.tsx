@@ -627,6 +627,32 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
   }, [handleMouseMove, handleMouseUpGlobal]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (connectingPin) {
+          setConnectingPin(null);
+        }
+      }
+      if (e.key === 'Delete') {
+        if (selectedComponentIds.length > 0 && !isSimulating) {
+          setComponents(prev => prev.filter(c => !selectedComponentIds.includes(c.id)));
+          setConnections(prev => prev.filter(conn => !selectedComponentIds.includes(conn.startComponentId) && !selectedComponentIds.includes(conn.endComponentId)));
+          if (selectedComponentForSidebar && selectedComponentIds.includes(selectedComponentForSidebar.id)) {
+            setSelectedComponentForSidebar(null);
+            setIsPropertiesSidebarOpen(false);
+          }
+          toast({ title: 'Bauteile gelöscht', description: `${selectedComponentIds.length} Bauteil${selectedComponentIds.length > 1 ? 'e' : ''} entfernt.` });
+          setSelectedComponentIds([]);
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [connectingPin, selectedComponentIds, isSimulating, selectedComponentForSidebar, toast]);
+
+  useEffect(() => {
     const resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
