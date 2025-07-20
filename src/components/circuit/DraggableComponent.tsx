@@ -13,6 +13,7 @@ interface DraggableComponentProps {
   isSimulating?: boolean;
   isMeasuring?: boolean;
   simulatedState?: SimulatedComponentState;
+  selected?: boolean;
 }
 
 const DraggableComponent: React.FC<DraggableComponentProps> = ({
@@ -25,6 +26,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   isSimulating,
   isMeasuring,
   simulatedState,
+  selected,
 }) => {
   const definition = COMPONENT_DEFINITIONS[component.type];
   if (!definition) return null;
@@ -76,6 +78,8 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   };
 
   const scale = component.scale || 1;
+  const width = (component.width ?? definition.width) * scale;
+  const height = (component.height ?? definition.height) * scale;
 
   return (
     <g
@@ -95,6 +99,19 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
         component.displayPinLabels,
         simulatedState,
         component.id
+      )}
+
+      {selected && (
+        <rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill="none"
+          stroke="hsl(var(--ring))"
+          strokeDasharray="4 2"
+          pointerEvents="none"
+        />
       )}
       
       {/* Pin circles are also drawn within this scaled group.

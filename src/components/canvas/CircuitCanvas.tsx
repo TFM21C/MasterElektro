@@ -26,6 +26,9 @@ interface CircuitCanvasProps {
   selectedConnectionId?: string | null;
   projectType?: ProjectType | null;
   snapLines?: { x: number | null; y: number | null };
+  onCanvasMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
+  selectionRect?: { x: number; y: number; width: number; height: number } | null;
+  selectedComponentIds?: string[];
 }
 
 const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
@@ -51,7 +54,10 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   simulatedComponentStates,
   selectedConnectionId,
   projectType,
-  snapLines
+  snapLines,
+  onCanvasMouseDown,
+  selectionRect,
+  selectedComponentIds
 }) => {
 
   const getLineColor = (connection: Connection, isConducting: boolean) => {
@@ -77,6 +83,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       className="border border-border bg-card rounded-lg shadow-inner flex-grow"
       data-testid="circuit-canvas"
       style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
+      onMouseDown={onCanvasMouseDown}
     >
       {components.map(comp => (
         <DraggableComponent
@@ -90,6 +97,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           isSimulating={isSimulating}
           isMeasuring={isMeasuring}
           simulatedState={simulatedComponentStates[comp.id]}
+          selected={selectedComponentIds?.includes(comp.id)}
         />
       ))}
 
@@ -201,6 +209,18 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           x2={viewBoxWidth}
           y2={snapLines.y}
           stroke="hsl(var(--muted-foreground))"
+          strokeDasharray="4 2"
+        />
+      )}
+
+      {selectionRect && (
+        <rect
+          x={selectionRect.x}
+          y={selectionRect.y}
+          width={selectionRect.width}
+          height={selectionRect.height}
+          fill="rgba(100,100,255,0.2)"
+          stroke="hsl(var(--ring))"
           strokeDasharray="4 2"
         />
       )}
