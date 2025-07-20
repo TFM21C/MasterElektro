@@ -147,12 +147,57 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               <stop offset="100%" stopColor="#FFFF00" />
             </linearGradient>
           </defs>
-          <line x1={viewBoxWidth / 2 - 10} y1={10} x2={viewBoxWidth / 2 - 10} y2={10 + lineLength} stroke="#FF0000" strokeWidth={2} />
-          <line x1={viewBoxWidth / 2} y1={10} x2={viewBoxWidth / 2} y2={10 + lineLength} stroke="#0000FF" strokeWidth={2} />
-          <line x1={viewBoxWidth / 2 + 10} y1={10} x2={viewBoxWidth / 2 + 10} y2={10 + lineLength} stroke="url(#pe-gradient)" strokeWidth={2} />
-          <circle cx={viewBoxWidth / 2 - 10} cy={10 + lineLength} r={4} fill="#FF0000" onMouseDown={() => onLineHandleMouseDown?.(0)} style={{ cursor: 'ns-resize' }} />
-          <circle cx={viewBoxWidth / 2} cy={10 + lineLength} r={4} fill="#0000FF" onMouseDown={() => onLineHandleMouseDown?.(1)} style={{ cursor: 'ns-resize' }} />
-          <circle cx={viewBoxWidth / 2 + 10} cy={10 + lineLength} r={4} fill="#FFFF00" stroke="#00FF00" strokeWidth={1} onMouseDown={() => onLineHandleMouseDown?.(2)} style={{ cursor: 'ns-resize' }} />
+          {/** Horizontal main rails */}
+          <line
+            x1={viewBoxWidth / 2 - lineLength / 2}
+            y1={10}
+            x2={viewBoxWidth / 2 + lineLength / 2}
+            y2={10}
+            stroke="#FF0000"
+            strokeWidth={2}
+          />
+          <line
+            x1={viewBoxWidth / 2 - lineLength / 2}
+            y1={20}
+            x2={viewBoxWidth / 2 + lineLength / 2}
+            y2={20}
+            stroke="#0000FF"
+            strokeWidth={2}
+          />
+          <line
+            x1={viewBoxWidth / 2 - lineLength / 2}
+            y1={30}
+            x2={viewBoxWidth / 2 + lineLength / 2}
+            y2={30}
+            stroke="url(#pe-gradient)"
+            strokeWidth={2}
+          />
+          <circle
+            cx={viewBoxWidth / 2 + lineLength / 2}
+            cy={10}
+            r={4}
+            fill="#FF0000"
+            onMouseDown={() => onLineHandleMouseDown?.(0)}
+            style={{ cursor: 'ew-resize' }}
+          />
+          <circle
+            cx={viewBoxWidth / 2 + lineLength / 2}
+            cy={20}
+            r={4}
+            fill="#0000FF"
+            onMouseDown={() => onLineHandleMouseDown?.(1)}
+            style={{ cursor: 'ew-resize' }}
+          />
+          <circle
+            cx={viewBoxWidth / 2 + lineLength / 2}
+            cy={30}
+            r={4}
+            fill="#FFFF00"
+            stroke="#00FF00"
+            strokeWidth={1}
+            onMouseDown={() => onLineHandleMouseDown?.(2)}
+            style={{ cursor: 'ew-resize' }}
+          />
         </g>
       )}
       {viewComponents.map(comp => (

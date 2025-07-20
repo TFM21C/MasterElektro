@@ -575,7 +575,10 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       );
       setSnapLines({ x: null, y: null });
     } else if (draggingLine !== null) {
-      const newLen = Math.max(50, Math.min(viewBoxSize.height - 20, y - 10));
+      const newLen = Math.max(
+        50,
+        Math.min(viewBoxSize.width - 20, 2 * (x - viewBoxSize.width / 2))
+      );
       setLineLength(newLen);
     } else {
       setSnapLines({ x: null, y: null });
