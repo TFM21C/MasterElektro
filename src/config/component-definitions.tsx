@@ -2,6 +2,11 @@
 import type { ComponentDefinition, SimulatedComponentState } from '@/types/circuit';
 import AusschalterSvg from '@/components/svg/Ausschalter';
 import Energieversorgung400VSvg from '@/components/svg/bauteile/energieversorgung/Energieversorgung400V';
+import L1LeitungSvg from '@/components/svg/bauteile/energieversorgung/L1Leitung';
+import L2LeitungSvg from '@/components/svg/bauteile/energieversorgung/L2Leitung';
+import L3LeitungSvg from '@/components/svg/bauteile/energieversorgung/L3Leitung';
+import NLeitungSvg from '@/components/svg/bauteile/energieversorgung/NLeitung';
+import PELeitungSvg from '@/components/svg/bauteile/energieversorgung/PELeitung';
 
 export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
   '24V': {
@@ -73,6 +78,57 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
+  },
+
+  'L1Leitung': {
+    width: 260,
+    height: 20,
+    render: (_label, _state, _displayPinLabels, _simulatedState, componentId) => (
+      <>
+        <L1LeitungSvg data-component-id={componentId} />
+      </>
+    ),
+    pins: { 'out': { x: 240, y: 10, label: '' } }
+  },
+  'L2Leitung': {
+    width: 260,
+    height: 20,
+    render: (_label, _state, _displayPinLabels, _simulatedState, componentId) => (
+      <>
+        <L2LeitungSvg data-component-id={componentId} />
+      </>
+    ),
+    pins: { 'out': { x: 240, y: 10, label: '' } }
+  },
+  'L3Leitung': {
+    width: 260,
+    height: 20,
+    render: (_label, _state, _displayPinLabels, _simulatedState, componentId) => (
+      <>
+        <L3LeitungSvg data-component-id={componentId} />
+      </>
+    ),
+    pins: { 'out': { x: 240, y: 10, label: '' } }
+  },
+  'NLeitung': {
+    width: 260,
+    height: 20,
+    render: (_label, _state, _displayPinLabels, _simulatedState, componentId) => (
+      <>
+        <NLeitungSvg data-component-id={componentId} />
+      </>
+    ),
+    pins: { 'out': { x: 240, y: 10, label: '' } }
+  },
+  'PELeitung': {
+    width: 260,
+    height: 20,
+    render: (_label, _state, _displayPinLabels, _simulatedState, componentId) => (
+      <>
+        <PELeitungSvg data-component-id={componentId} />
+      </>
+    ),
+    pins: { 'out': { x: 240, y: 10, label: '' } }
   },
   'Energieversorgung400V': {
     width: 260,

@@ -172,6 +172,46 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
+    case 'L1Leitung':
+      iconContent = (
+        <>
+          <line x1="5" y1="20" x2="35" y2="20" stroke="red" strokeWidth="3" />
+          <circle cx="35" cy="20" r="4" stroke="black" strokeWidth="1" fill="white" />
+        </>
+      );
+      break;
+    case 'L2Leitung':
+      iconContent = (
+        <>
+          <line x1="5" y1="20" x2="35" y2="20" stroke="black" strokeWidth="3" />
+          <circle cx="35" cy="20" r="4" stroke="black" strokeWidth="1" fill="white" />
+        </>
+      );
+      break;
+    case 'L3Leitung':
+      iconContent = (
+        <>
+          <line x1="5" y1="20" x2="35" y2="20" stroke="gray" strokeWidth="3" />
+          <circle cx="35" cy="20" r="4" stroke="black" strokeWidth="1" fill="white" />
+        </>
+      );
+      break;
+    case 'NLeitung':
+      iconContent = (
+        <>
+          <line x1="5" y1="20" x2="35" y2="20" stroke="blue" strokeWidth="3" />
+          <circle cx="35" cy="20" r="4" stroke="black" strokeWidth="1" fill="white" />
+        </>
+      );
+      break;
+    case 'PELeitung':
+      iconContent = (
+        <>
+          <line x1="5" y1="20" x2="35" y2="20" stroke="green" strokeWidth="3" />
+          <circle cx="35" cy="20" r="4" stroke="black" strokeWidth="1" fill="white" />
+        </>
+      );
+      break;
     default:
       iconContent = (
         <rect x="5" y="5" width="30" height="30" stroke="grey" strokeWidth="1" fill="lightgrey" />
