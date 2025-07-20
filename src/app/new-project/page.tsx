@@ -65,9 +65,27 @@ const DesignerPageContent: React.FC = () => {
   const filteredPaletteComponents = React.useMemo(() => {
     return MOCK_PALETTE_COMPONENTS.filter(comp => {
       if (projectType === "Installationsschaltplan") {
-        return comp.category === "Installationselemente" || comp.category === "Energieversorgung";
+        return (
+          comp.category === "Installationselemente" ||
+          comp.category === "Energieversorgung" ||
+          comp.category === "Sensoren"
+        );
       }
-      return comp.category?.includes("Steuerstrom") || comp.category === "Energieversorgung" || comp.category === "Befehlsgeräte" || comp.category === "Speichernde / Verarbeitende" || comp.category === "Stellglieder";
+      if (projectType === "Hauptstromkreis") {
+        return (
+          comp.category === "Hauptstromkreis" ||
+          comp.category === "Energieversorgung" ||
+          comp.category?.includes("Steuerstrom")
+        );
+      }
+      // Default for Steuerstromkreis etc.
+      return (
+        comp.category?.includes("Steuerstrom") ||
+        comp.category === "Energieversorgung" ||
+        comp.category === "Befehlsgeräte" ||
+        comp.category === "Speichernde / Verarbeitende" ||
+        comp.category === "Stellglieder"
+      );
     });
   }, [projectType]);
 
