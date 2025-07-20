@@ -234,4 +234,74 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       'N': { x: 15, y: 29, label: 'N' }
     }
   },
+  'Steckdose': {
+    width: 30,
+    height: 30,
+    render: (label) => (
+      <>
+        <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
+        <circle cx="11" cy="13" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+        <circle cx="19" cy="13" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+        <circle cx="15" cy="18" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+        <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
+      </>
+    ),
+    pins: {
+      'L': { x: 1, y: 15, label: 'L' },
+      'N': { x: 29, y: 15, label: 'N' },
+      'PE': { x: 15, y: 29, label: 'PE' }
+    }
+  },
+  'Wechselschalter': {
+    width: 30,
+    height: 30,
+    render: (label, _state, displayPinLabels = { 'L': 'L', 'Ausgang1': '1', 'Ausgang2': '2' }, simulatedState) => {
+      const toAusgang1 = simulatedState?.currentContactState?.Ausgang1 === 'closed';
+      const wiperX = toAusgang1 ? 8 : 22;
+      const inactiveX = toAusgang1 ? 22 : 8;
+      return (
+        <>
+          <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
+          <line x1="15" y1="5" x2="15" y2="15" className="line" strokeWidth="1.5" />
+          <line x1="8" y1="22" x2="8" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="22" y1="22" x2="22" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="15" x2={inactiveX} y2="22" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="15" x2={wiperX} y2="22" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'L': { x: 15, y: 1, label: 'L' },
+      'Ausgang1': { x: 1, y: 25, label: '1' },
+      'Ausgang2': { x: 29, y: 25, label: '2' }
+    },
+    initialDisplayPinLabels: { 'L': 'L', 'Ausgang1': '1', 'Ausgang2': '2' }
+  },
+  'Grenztaster': {
+    width: 30,
+    height: 30,
+    render: (label, _state, displayPinLabels = { 'in': 'in', 'out': 'out' }, simulatedState) => {
+      const isClosed = simulatedState?.currentContactState?.in === 'closed';
+      return (
+        <>
+          <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
+          <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          {isClosed ? (
+            <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          ) : (
+            <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
+          )}
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
+          <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'in': { x: 15, y: 1, label: 'in' },
+      'out': { x: 15, y: 29, label: 'out' }
+    }
+  },
 };
