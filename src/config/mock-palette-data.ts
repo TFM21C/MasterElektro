@@ -196,7 +196,7 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     type: 'Öffner',
     paletteIconType: 'NotAusTaster',
     abbreviation: 'S',
-    defaultLabelPrefix: 'SQ',
+    defaultLabelPrefix: 'S',
     category: 'Befehlsgeräte (Steuerstrom)',
     description: 'Sicherheitsrelevanter Öffner mit mechanischer Verriegelung.',
     hasToggleState: true,
