@@ -36,6 +36,91 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       'in5': { x: 100, y: 10, label: '' }
     }
   },
+  'L1': {
+    width: 100,
+    height: 20,
+    render: (label) => (
+      <>
+        <line x1="0" y1="10" x2="100" y2="10" className="line" />
+        <text x="-20" y="12" className="component-text">{label}</text>
+      </>
+    ),
+    pins: {
+      'pin1': { x: 0, y: 10, label: '' },
+      'pin2': { x: 25, y: 10, label: '' },
+      'pin3': { x: 50, y: 10, label: '' },
+      'pin4': { x: 75, y: 10, label: '' },
+      'pin5': { x: 100, y: 10, label: '' }
+    }
+  },
+  'L2': {
+    width: 100,
+    height: 20,
+    render: (label) => (
+      <>
+        <line x1="0" y1="10" x2="100" y2="10" className="line" />
+        <text x="-20" y="12" className="component-text">{label}</text>
+      </>
+    ),
+    pins: {
+      'pin1': { x: 0, y: 10, label: '' },
+      'pin2': { x: 25, y: 10, label: '' },
+      'pin3': { x: 50, y: 10, label: '' },
+      'pin4': { x: 75, y: 10, label: '' },
+      'pin5': { x: 100, y: 10, label: '' }
+    }
+  },
+  'L3': {
+    width: 100,
+    height: 20,
+    render: (label) => (
+      <>
+        <line x1="0" y1="10" x2="100" y2="10" className="line" />
+        <text x="-20" y="12" className="component-text">{label}</text>
+      </>
+    ),
+    pins: {
+      'pin1': { x: 0, y: 10, label: '' },
+      'pin2': { x: 25, y: 10, label: '' },
+      'pin3': { x: 50, y: 10, label: '' },
+      'pin4': { x: 75, y: 10, label: '' },
+      'pin5': { x: 100, y: 10, label: '' }
+    }
+  },
+  'N': {
+    width: 100,
+    height: 20,
+    render: (label) => (
+      <>
+        <line x1="0" y1="10" x2="100" y2="10" className="line" />
+        <text x="-20" y="12" className="component-text">{label}</text>
+      </>
+    ),
+    pins: {
+      'pin1': { x: 0, y: 10, label: '' },
+      'pin2': { x: 25, y: 10, label: '' },
+      'pin3': { x: 50, y: 10, label: '' },
+      'pin4': { x: 75, y: 10, label: '' },
+      'pin5': { x: 100, y: 10, label: '' }
+    }
+  },
+  'PE': {
+    width: 100,
+    height: 20,
+    render: (label) => (
+      <>
+        <line x1="0" y1="10" x2="100" y2="10" className="line" />
+        <text x="-20" y="12" className="component-text">{label}</text>
+      </>
+    ),
+    pins: {
+      'pin1': { x: 0, y: 10, label: '' },
+      'pin2': { x: 25, y: 10, label: '' },
+      'pin3': { x: 50, y: 10, label: '' },
+      'pin4': { x: 75, y: 10, label: '' },
+      'pin5': { x: 100, y: 10, label: '' }
+    }
+  },
   'Schließer': {
     width: 80,
     height: 60,
@@ -127,8 +212,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
             className={`symbol transition-all duration-300 ${simulatedState?.isEnergized ? 'lamp-glow' : ''}`}
             fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} 
         />
-        <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 - 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 + 25 / Math.sqrt(2)} className="line" />
-        <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 + 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 - 25 / Math.sqrt(2)} className="line" />
+        <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 - 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 + 25 / Math.sqrt(2)} className="line" stroke="black" />
+        <line x1={37.5 - 25 / Math.sqrt(2)} y1={37.5 + 25 / Math.sqrt(2)} x2={37.5 + 25 / Math.sqrt(2)} y2={37.5 - 25 / Math.sqrt(2)} className="line" stroke="black" />
         <text x="70" y="37.5" className="component-text">{label}</text>
         <text x="37.5" y="7.5" className="text-pin">{displayPinLabels['X1']}</text>
         <text x="37.5" y="67.5" className="text-pin">{displayPinLabels['X2']}</text>
@@ -231,8 +316,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       <>
         <circle cx="15" cy="15" r="14" className="symbol stroke-2" fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} />
         {/* X inside circle */}
-        <line x1="8" y1="8" x2="22" y2="22" className="line" strokeWidth="1.5" />
-        <line x1="8" y1="22" x2="22" y2="8" className="line" strokeWidth="1.5" />
+        <line x1="8" y1="8" x2="22" y2="22" className="line" strokeWidth="1.5" stroke="black" />
+        <line x1="8" y1="22" x2="22" y2="8" className="line" strokeWidth="1.5" stroke="black" />
         <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
       </>
     ),

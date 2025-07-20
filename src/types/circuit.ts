@@ -51,6 +51,7 @@ export interface PaletteComponentFirebaseData {
   hasEditablePins: boolean;
   initialPinLabels: Record<string, string>;
   paletteIconType?: string;
+  voltageType?: string;
 
   resizable?: boolean;
   defaultSize?: { width: number; height: number };
