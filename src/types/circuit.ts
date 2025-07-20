@@ -67,6 +67,7 @@ export interface ElectricalComponent {
   id: string;
   type: string;
   firebaseComponentId: string; // ID from PaletteComponentFirebaseData
+  parentId?: string | null;
   x: number;
   y: number;
   label: string;
