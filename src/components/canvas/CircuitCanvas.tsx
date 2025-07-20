@@ -26,6 +26,7 @@ interface CircuitCanvasProps {
   simulatedComponentStates: { [key: string]: SimulatedComponentState };
   selectedConnectionId?: string | null;
   projectType?: ProjectType | null;
+  showGrid?: boolean;
   snapLines?: { x: number | null; y: number | null };
   onCanvasMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
   selectionRect?: { x: number; y: number; width: number; height: number } | null;
@@ -55,6 +56,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   simulatedComponentStates,
   selectedConnectionId,
   projectType,
+  showGrid,
   snapLines,
   onCanvasMouseDown,
   selectionRect,
@@ -92,6 +94,22 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
       onMouseDown={onCanvasMouseDown}
     >
+      {showGrid && (
+        <defs>
+          <pattern id="a4grid" width="5" height="5" patternUnits="userSpaceOnUse">
+            <path d="M5 0H0V5" fill="none" stroke="#ccc" strokeWidth="0.5" />
+          </pattern>
+        </defs>
+      )}
+      {showGrid && <rect width="100%" height="100%" fill="url(#a4grid)" />}
+
+      {projectType === 'Stromlaufplan in zusammenhängender Darstellung' && (
+        <g>
+          <line x1={0} y1={50} x2={viewBoxWidth} y2={50} stroke="red" strokeWidth={2} />
+          <line x1={0} y1={100} x2={viewBoxWidth} y2={100} stroke="blue" strokeWidth={2} />
+          <line x1={0} y1={150} x2={viewBoxWidth} y2={150} stroke="green" strokeWidth={2} />
+        </g>
+      )}
       {viewComponents.map(comp => (
         <DraggableComponent
           key={comp.id}

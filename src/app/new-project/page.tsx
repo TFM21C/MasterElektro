@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Download, Lightbulb, Info, ChevronLeft, Play, Gauge, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, Lightbulb, Info, ChevronLeft, Play, Gauge, ZoomIn, ZoomOut, Grid } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
@@ -71,6 +71,8 @@ const DesignerPageContent: React.FC = () => {
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
   const [isMeasuring, setIsMeasuring] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
+  const [simulationErrors, setSimulationErrors] = useState<string[]>([]);
   const [measurements, setMeasurements] = useState<{id: number, x: number, y: number, value: string}[]>([]);
 
   const filteredPaletteComponents = React.useMemo(() => {
@@ -81,6 +83,17 @@ const DesignerPageContent: React.FC = () => {
           comp.category === "Energieversorgung" ||
           comp.category === "Sensoren"
         );
+      }
+      if (projectType === "Stromlaufplan in zusammenhängender Darstellung") {
+        const allowed = [
+          'sicherung',
+          'wechselschalter_install',
+          'taster_schliesser_install',
+          'lampe_install',
+          'steckdose_install',
+          'schuetzspule'
+        ];
+        return allowed.includes(comp.id);
       }
       if (projectType === "Hauptstromkreis") {
         return (
@@ -123,7 +136,31 @@ const DesignerPageContent: React.FC = () => {
   }, [searchParams]);
 
 
+  const checkShortCircuits = useCallback(() => {
+    const errors: string[] = [];
+    connections.forEach(conn => {
+      const sType = components.find(c => c.id === conn.startComponentId)?.type;
+      const eType = components.find(c => c.id === conn.endComponentId)?.type;
+      if (!sType || !eType) return;
+      const phases = ['L1','L2','L3','L','24V'];
+      const neutrals = ['N','0V'];
+      if ((phases.includes(sType) && (neutrals.includes(eType) || eType === 'PE')) ||
+          (phases.includes(eType) && (neutrals.includes(sType) || sType === 'PE')) ||
+          (sType === '24V' && eType === '0V') || (sType === '0V' && eType === '24V')) {
+        errors.push(`Kurzschluss zwischen ${sType} und ${eType}`);
+      }
+    });
+    return errors;
+  }, [components, connections]);
+
   const runSimulationStep = useCallback(() => {
+    const errs = checkShortCircuits();
+    if (errs.length) {
+      setSimulationErrors(errs);
+      setIsSimulating(false);
+      return;
+    }
+    setSimulationErrors([]);
     setSimulatedComponentStates(currentSimStates => {
       let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
 
@@ -980,6 +1017,9 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
                 <Button variant="outline" size="sm" onClick={zoomOut}>
                     <ZoomOut className="mr-2 h-4 w-4" />
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowGrid(p => !p)}>
+                    <Grid className="mr-2 h-4 w-4" />
+                </Button>
             </div>
         </div>
 
@@ -1008,11 +1048,18 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             simulatedComponentStates={simulatedComponentStates}
             selectedConnectionId={selectedConnectionId}
             projectType={projectType}
+            showGrid={showGrid}
             snapLines={snapLines}
             selectionRect={selectionRect}
-            selectedComponentIds={selectedComponentIds}
+          selectedComponentIds={selectedComponentIds}
           />
         </div>
+
+        {simulationErrors.length > 0 && (
+          <div className="p-2 text-red-600" data-testid="error-panel">
+            {simulationErrors.map((e, i) => (<div key={i}>{e}</div>))}
+          </div>
+        )}
 
         <Accordion type="single" collapsible className="w-full p-4 border-t border-border">
           <AccordionItem value="info">
