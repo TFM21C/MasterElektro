@@ -1,4 +1,3 @@
-
 // Using .tsx because it contains JSX in render functions
 import type { ComponentDefinition, SimulatedComponentState } from '@/types/circuit';
 
@@ -62,7 +61,7 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     render: (label, _state, displayPinLabels = { '11': '11', '12': '12' }, simulatedState) => {
         // isClosed ist 'true' im Ruhezustand eines Öffners (Normally Closed)
         const isClosed = simulatedState?.currentContactState?.['11'] === 'closed' &&
-                         simulatedState?.currentContactState?.['12'] === 'closed';
+                          simulatedState?.currentContactState?.['12'] === 'closed';
         return (
             <>
                 <line x1="25" y1="0" x2="25" y2="22.5" className="line" />
@@ -232,6 +231,128 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     pins: {
       'L': { x: 15, y: 1, label: 'L' },
       'N': { x: 15, y: 29, label: 'N' }
+    }
+  },
+
+  // ---- Hauptstromkreis & Schutzgeräte ----
+  'Motorschutzschalter': {
+    width: 120,
+    height: 60,
+    render: (label, _state, displayPinLabels = {
+      'L1': 'L1', 'T1': 'T1',
+      'L2': 'L2', 'T2': 'T2',
+      'L3': 'L3', 'T3': 'T3'
+    }, simulatedState) => {
+      const isClosed = (pin: string) => simulatedState?.currentContactState?.[pin] !== 'open';
+      const drawPole = (x: number, pinTop: string, pinBottom: string) => (
+        <>
+          <line x1={x} y1={0} x2={x} y2={15} className="line" />
+          <line x1={x} y1={45} x2={x} y2={60} className="line" />
+          {isClosed(pinTop) && isClosed(pinBottom) ? (
+            <line x1={x} y1={15} x2={x} y2={45} className="line stroke-[hsl(var(--destructive))] stroke-2" />
+          ) : (
+            <line x1={x - 10} y1={15} x2={x} y2={45} className="line" />
+          )}
+        </>
+      );
+      return (
+        <>
+          {drawPole(20, 'L1', 'T1')}
+          {drawPole(60, 'L2', 'T2')}
+          {drawPole(100, 'L3', 'T3')}
+          <text x="20" y="-5" className="text-pin">{displayPinLabels['L1']}</text>
+          <text x="20" y="70" className="text-pin">{displayPinLabels['T1']}</text>
+          <text x="60" y="-5" className="text-pin">{displayPinLabels['L2']}</text>
+          <text x="60" y="70" className="text-pin">{displayPinLabels['T2']}</text>
+          <text x="100" y="-5" className="text-pin">{displayPinLabels['L3']}</text>
+          <text x="100" y="70" className="text-pin">{displayPinLabels['T3']}</text>
+          <text x="130" y="30" className="component-text">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'L1': { x: 20, y: 0, label: 'L1' },
+      'T1': { x: 20, y: 60, label: 'T1' },
+      'L2': { x: 60, y: 0, label: 'L2' },
+      'T2': { x: 60, y: 60, label: 'T2' },
+      'L3': { x: 100, y: 0, label: 'L3' },
+      'T3': { x: 100, y: 60, label: 'T3' }
+    }
+  },
+  'Sicherung': {
+    width: 60,
+    height: 30,
+    render: (label, _state, displayPinLabels = { 'in': '', 'out': '' }, simulatedState) => (
+      <>
+        <rect x="10" y="5" width="40" height="20" className="symbol" />
+        {simulatedState?.currentContactState?.['in'] !== 'open' && simulatedState?.currentContactState?.['out'] !== 'open' ? (
+          <line x1="10" y1="15" x2="50" y2="15" className="line stroke-[hsl(var(--destructive))]" />
+        ) : (
+          <line x1="10" y1="15" x2="50" y2="15" className="line" strokeDasharray="2 2" />
+        )}
+        <text x="30" y="-5" className="component-text">{label}</text>
+        <text x="0" y="17" className="text-pin">{displayPinLabels['in']}</text>
+        <text x="60" y="17" className="text-pin">{displayPinLabels['out']}</text>
+      </>
+    ),
+    pins: {
+      'in': { x: 0, y: 15, label: 'in' },
+      'out': { x: 60, y: 15, label: 'out' }
+    }
+  },
+  'Fehlerstromschutzschalter': {
+    width: 140,
+    height: 80,
+    render: (label, _state, displayPinLabels = {
+      'L1': 'L1', 'L1out': "L1'",
+      'L2': 'L2', 'L2out': "L2'",
+      'L3': 'L3', 'L3out': "L3'",
+      'N': 'N',   'Nout': "N'"
+    }, simulatedState) => {
+      const isClosed = (pinTop: string, pinBottom: string) => (
+        simulatedState?.currentContactState?.[pinTop] !== 'open' &&
+        simulatedState?.currentContactState?.[pinBottom] !== 'open'
+      );
+      const drawPole = (x: number, pTop: string, pBot: string) => (
+        <>
+          <line x1={x} y1={0} x2={x} y2={25} className="line" />
+          <line x1={x} y1={55} x2={x} y2={80} className="line" />
+          {isClosed(pTop, pBot) ? (
+            <line x1={x} y1={25} x2={x} y2={55} className="line stroke-[hsl(var(--destructive))] stroke-2" />
+          ) : (
+            <line x1={x - 10} y1={25} x2={x} y2={55} className="line" />
+          )}
+        </>
+      );
+      return (
+        <>
+          {drawPole(20, 'L1', 'L1out')}
+          {drawPole(60, 'L2', 'L2out')}
+          {drawPole(100, 'L3', 'L3out')}
+          {drawPole(130, 'N', 'Nout')}
+          <circle cx="40" cy="40" r="10" className="symbol" />
+          <rect x="70" y="35" width="10" height="10" className="symbol" />
+          <text x="20" y="-5" className="text-pin">{displayPinLabels['L1']}</text>
+          <text x="20" y="90" className="text-pin">{displayPinLabels['L1out']}</text>
+          <text x="60" y="-5" className="text-pin">{displayPinLabels['L2']}</text>
+          <text x="60" y="90" className="text-pin">{displayPinLabels['L2out']}</text>
+          <text x="100" y="-5" className="text-pin">{displayPinLabels['L3']}</text>
+          <text x="100" y="90" className="text-pin">{displayPinLabels['L3out']}</text>
+          <text x="130" y="-5" className="text-pin">{displayPinLabels['N']}</text>
+          <text x="130" y="90" className="text-pin">{displayPinLabels['Nout']}</text>
+          <text x="150" y="40" className="component-text">{label}</text>
+        </>
+      );
+    },
+    pins: {
+      'L1': { x: 20, y: 0, label: 'L1' },
+      'L1out': { x: 20, y: 80, label: "L1'" },
+      'L2': { x: 60, y: 0, label: 'L2' },
+      'L2out': { x: 60, y: 80, label: "L2'" },
+      'L3': { x: 100, y: 0, label: 'L3' },
+      'L3out': { x: 100, y: 80, label: "L3'" },
+      'N': { x: 130, y: 0, label: 'N' },
+      'Nout': { x: 130, y: 80, label: "N'" }
     }
   },
   'Steckdose': {
