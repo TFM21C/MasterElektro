@@ -907,6 +907,44 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
     setIsPropertiesSidebarOpen(true);
   }, [isSimulating, components, toast, projectType]);
 
+  const addComponentAtPosition = useCallback((paletteItem: PaletteComponentFirebaseData, position: Point) => {
+    if (isSimulating) {
+        toast({ title: "Aktion nicht erlaubt", description: "Bauteile können nicht während der Simulation hinzugefügt werden.", variant: "destructive" });
+        return;
+    }
+    const newId = `${paletteItem.id.replace(/[^a-z0-9]/gi, '')}-${Date.now()}`;
+    const definition = COMPONENT_DEFINITIONS[paletteItem.type];
+
+    const existingOfType = components.filter(c => c.firebaseComponentId === paletteItem.id).length;
+    let newLabel = `${paletteItem.defaultLabelPrefix}${existingOfType + 1}`;
+    if (paletteItem.defaultLabelPrefix === '+24V' || paletteItem.defaultLabelPrefix === '0V') {
+      newLabel = paletteItem.defaultLabelPrefix;
+      if (components.some(c => c.label === newLabel)) {
+        newLabel = `${paletteItem.defaultLabelPrefix}${existingOfType + 1}`;
+      }
+    }
+
+    const newComponent: ElectricalComponent = {
+      id: newId,
+      type: paletteItem.type,
+      firebaseComponentId: paletteItem.id,
+      parentId: null,
+      x: position.x,
+      y: position.y,
+      label: newLabel,
+      state: definition?.initialState ? { ...definition.initialState } : undefined,
+      displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
+      scale: 1.0,
+      width: null,
+      height: null,
+    };
+
+    setComponents(prev => [...prev, newComponent]);
+    setSelectedComponentForSidebar(newComponent);
+    setSelectedConnectionId(null);
+    setIsPropertiesSidebarOpen(true);
+  }, [isSimulating, components, toast]);
+
   const confirmDelete = useCallback((type: 'component' | 'connection' | 'waypoint', id: string, waypointIndex?: number) => {
     if (isSimulating) {
         toast({ title: "Aktion nicht erlaubt", description: "Elemente können nicht während der Simulation gelöscht werden.", variant: "destructive" });
@@ -1052,6 +1090,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             snapLines={snapLines}
             selectionRect={selectionRect}
             selectedComponentIds={selectedComponentIds}
+            onDropComponent={addComponentAtPosition}
           />
         </div>
 

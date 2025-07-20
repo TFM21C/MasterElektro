@@ -60,9 +60,13 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({ onAddComponent, isO
                       <Button
                         key={componentData.id}
                         onClick={() => onAddComponent(componentData)}
-                        variant="outline" 
+                        variant="outline"
                         className="w-full h-auto p-2 bg-card hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 transition duration-150 ease-in-out shadow-md flex flex-col items-center justify-center group border-border text-left"
                         disabled={isSimulating}
+                        draggable={!isSimulating}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('application/json', JSON.stringify(componentData));
+                        }}
                       >
                         <div className="bg-white p-1 rounded mb-1.5 inline-block">
                           <PaletteIcon type={componentData.paletteIconType || componentData.type} />
