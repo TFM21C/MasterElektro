@@ -139,15 +139,29 @@ const DesignerPageContent: React.FC = () => {
   const checkShortCircuits = useCallback(() => {
     const errors: string[] = [];
     connections.forEach(conn => {
-      const sType = components.find(c => c.id === conn.startComponentId)?.type;
-      const eType = components.find(c => c.id === conn.endComponentId)?.type;
-      if (!sType || !eType) return;
-      const phases = ['L1','L2','L3','L','24V'];
-      const neutrals = ['N','0V'];
-      if ((phases.includes(sType) && (neutrals.includes(eType) || eType === 'PE')) ||
-          (phases.includes(eType) && (neutrals.includes(sType) || sType === 'PE')) ||
-          (sType === '24V' && eType === '0V') || (sType === '0V' && eType === '24V')) {
-        errors.push(`Kurzschluss zwischen ${sType} und ${eType}`);
+      const startComp = components.find(c => c.id === conn.startComponentId);
+      const endComp = components.find(c => c.id === conn.endComponentId);
+      if (!startComp || !endComp) return;
+      const sType = startComp.type;
+      const eType = endComp.type;
+      const phases = ['L1', 'L2', 'L3', 'L', '24V'];
+      const neutrals = ['N', '0V'];
+      const isShort = (
+        (phases.includes(sType) && (neutrals.includes(eType) || eType === 'PE')) ||
+        (phases.includes(eType) && (neutrals.includes(sType) || sType === 'PE')) ||
+        (sType === '24V' && eType === '0V') ||
+        (sType === '0V' && eType === '24V')
+      );
+      if (isShort) {
+        const startIsSupply = phases.includes(sType) || neutrals.includes(sType) || ['PE', '0V', '24V'].includes(sType);
+        const endIsSupply = phases.includes(eType) || neutrals.includes(eType) || ['PE', '0V', '24V'].includes(eType);
+        let targetLabel = '';
+        if (startIsSupply && !endIsSupply) targetLabel = endComp.label;
+        if (!startIsSupply && endIsSupply) targetLabel = startComp.label;
+        const desc = targetLabel
+          ? `Kurzschluss zwischen ${sType} und ${eType} in Leitung zu ${targetLabel}`
+          : `Kurzschluss zwischen ${sType} und ${eType}`;
+        errors.push(desc);
       }
     });
     return errors;
@@ -618,8 +632,15 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
 
   const toggleSimulation = useCallback(() => {
     setIsSimulating(prev => {
-      const newSimulatingState = !prev;
+      let newSimulatingState = !prev;
       if (newSimulatingState) {
+        const errs = checkShortCircuits();
+        if (errs.length) {
+          setSimulationErrors(errs);
+          newSimulatingState = prev;
+        }
+      }
+      if (newSimulatingState && !prev) {
         const initialSimCompStates: { [key: string]: SimulatedComponentState } = {};
         components.forEach(comp => {
           const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
@@ -648,7 +669,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       }
       return newSimulatingState;
     });
-  }, [components, connections]);
+  }, [components, connections, checkShortCircuits]);
 
   const zoomIn = useCallback(() => {
     setViewBoxSize(prev => ({ width: prev.width * 1.2, height: prev.height * 1.2 }));
