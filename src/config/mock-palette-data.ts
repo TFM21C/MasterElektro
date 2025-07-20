@@ -202,7 +202,59 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
       interactable: false,
       controlLogic: 'visualize_energized',
       controlledBy: 'voltage',
-      energizePins: ['X1', 'X2'],
+    energizePins: ['X1', 'X2'],
+    }
+  },
+
+  // Hauptstromkreis
+  {
+    id: 'motorschutzschalter',
+    name: 'Motorschutzschalter',
+    type: 'Motorschutzschalter',
+    abbreviation: 'Q',
+    defaultLabelPrefix: 'Q',
+    category: 'Hauptstromkreis',
+    description: 'Schützt Motoren vor Überlast und Kurzschluss.',
+    hasToggleState: true,
+    hasEditablePins: true,
+    initialPinLabels: { 'L1': 'L1', 'T1': 'T1', 'L2': 'L2', 'T2': 'T2', 'L3': 'L3', 'T3': 'T3' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Motorschutzschalter'].width, height: COMPONENT_DEFINITIONS['Motorschutzschalter'].height },
+    minScale: 0.7,
+    maxScale: 1.8,
+    scaleStep: 0.1,
+    simulation: {
+      interactable: true,
+      controlLogic: 'toggle_on_click',
+      controlledBy: 'user',
+      initialContactState: { 'L1': 'closed', 'T1': 'closed', 'L2': 'closed', 'T2': 'closed', 'L3': 'closed', 'T3': 'closed' },
+      outputPinStateOnEnergized: { 'L1': 'open', 'T1': 'open', 'L2': 'open', 'T2': 'open', 'L3': 'open', 'T3': 'open' },
+      outputPinStateOnDeEnergized: { 'L1': 'closed', 'T1': 'closed', 'L2': 'closed', 'T2': 'closed', 'L3': 'closed', 'T3': 'closed' }
+    }
+  },
+  {
+    id: 'sicherung',
+    name: 'Sicherung',
+    type: 'Sicherung',
+    abbreviation: 'F',
+    defaultLabelPrefix: 'F',
+    category: 'Hauptstromkreis',
+    description: 'Schmelzsicherung zum Leitungsschutz.',
+    hasToggleState: true,
+    hasEditablePins: false,
+    initialPinLabels: { 'in': '', 'out': '' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Sicherung'].width, height: COMPONENT_DEFINITIONS['Sicherung'].height },
+    minScale: 0.7,
+    maxScale: 1.5,
+    scaleStep: 0.1,
+    simulation: {
+      interactable: true,
+      controlLogic: 'toggle_on_click',
+      controlledBy: 'user',
+      initialContactState: { 'in': 'closed', 'out': 'closed' },
+      outputPinStateOnEnergized: { 'in': 'open', 'out': 'open' },
+      outputPinStateOnDeEnergized: { 'in': 'closed', 'out': 'closed' }
     }
   },
 
@@ -268,7 +320,32 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
       interactable: false,
       controlLogic: 'visualize_energized',
       controlledBy: 'voltage',
-      energizePins: ['L', 'N'],
+    energizePins: ['L', 'N'],
+    }
+  },
+  {
+    id: 'fi_schutzschalter',
+    name: 'Fehlerstromschutzschalter',
+    type: 'Fehlerstromschutzschalter',
+    abbreviation: 'FI',
+    defaultLabelPrefix: 'FI',
+    category: 'Installationselemente',
+    description: 'Unterbricht alle Leiter bei Fehlerströmen.',
+    hasToggleState: true,
+    hasEditablePins: true,
+    initialPinLabels: { 'L1': 'L1', "L1out": "L1'", 'L2': 'L2', "L2out": "L2'", 'L3': 'L3', "L3out": "L3'", 'N': 'N', "Nout": "N'" },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Fehlerstromschutzschalter'].width, height: COMPONENT_DEFINITIONS['Fehlerstromschutzschalter'].height },
+    minScale: 0.7,
+    maxScale: 1.5,
+    scaleStep: 0.1,
+    simulation: {
+      interactable: true,
+      controlLogic: 'toggle_on_click',
+      controlledBy: 'user',
+      initialContactState: { 'L1': 'closed', 'L1out': 'closed', 'L2': 'closed', 'L2out': 'closed', 'L3': 'closed', 'L3out': 'closed', 'N': 'closed', 'Nout': 'closed' },
+      outputPinStateOnEnergized: { 'L1': 'open', 'L1out': 'open', 'L2': 'open', 'L2out': 'open', 'L3': 'open', 'L3out': 'open', 'N': 'open', 'Nout': 'open' },
+      outputPinStateOnDeEnergized: { 'L1': 'closed', 'L1out': 'closed', 'L2': 'closed', 'L2out': 'closed', 'L3': 'closed', 'L3out': 'closed', 'N': 'closed', 'Nout': 'closed' }
     }
   },
 ];
