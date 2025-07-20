@@ -175,7 +175,7 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     initialPinLabels: { 'out': '' },
     resizable: true,
     defaultSize: { width: COMPONENT_DEFINITIONS['L1Leitung'].width, height: COMPONENT_DEFINITIONS['L1Leitung'].height },
-    minScale: 0.5, maxScale: 2.0, scaleStep: 0.1,
+    minScale: 0.5, maxScale: 5.0, scaleStep: 0.1,
     voltageType: 'AC_L',
     simulation: {
       interactable: false,
@@ -196,7 +196,7 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     initialPinLabels: { 'out': '' },
     resizable: true,
     defaultSize: { width: COMPONENT_DEFINITIONS['L2Leitung'].width, height: COMPONENT_DEFINITIONS['L2Leitung'].height },
-    minScale: 0.5, maxScale: 2.0, scaleStep: 0.1,
+    minScale: 0.5, maxScale: 5.0, scaleStep: 0.1,
     voltageType: 'AC_L',
     simulation: {
       interactable: false,
@@ -217,7 +217,7 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     initialPinLabels: { 'out': '' },
     resizable: true,
     defaultSize: { width: COMPONENT_DEFINITIONS['L3Leitung'].width, height: COMPONENT_DEFINITIONS['L3Leitung'].height },
-    minScale: 0.5, maxScale: 2.0, scaleStep: 0.1,
+    minScale: 0.5, maxScale: 5.0, scaleStep: 0.1,
     voltageType: 'AC_L',
     simulation: {
       interactable: false,
@@ -238,7 +238,7 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     initialPinLabels: { 'out': '' },
     resizable: true,
     defaultSize: { width: COMPONENT_DEFINITIONS['NLeitung'].width, height: COMPONENT_DEFINITIONS['NLeitung'].height },
-    minScale: 0.5, maxScale: 2.0, scaleStep: 0.1,
+    minScale: 0.5, maxScale: 5.0, scaleStep: 0.1,
     voltageType: 'NEUTRAL',
     simulation: {
       interactable: false,
@@ -259,7 +259,7 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     initialPinLabels: { 'out': '' },
     resizable: true,
     defaultSize: { width: COMPONENT_DEFINITIONS['PELeitung'].width, height: COMPONENT_DEFINITIONS['PELeitung'].height },
-    minScale: 0.5, maxScale: 2.0, scaleStep: 0.1,
+    minScale: 0.5, maxScale: 5.0, scaleStep: 0.1,
     voltageType: 'PE',
     simulation: {
       interactable: false,

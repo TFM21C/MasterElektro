@@ -95,7 +95,12 @@ const DesignerPageContent: React.FC = () => {
           'lampe_install',
           'steckdose_install',
           'schuetzspule',
-          'netzeinspeisung_400v'
+          'netzeinspeisung_400v',
+          'leitung_l1',
+          'leitung_l2',
+          'leitung_l3',
+          'leitung_n',
+          'leitung_pe'
         ];
         return allowed.includes(comp.id);
       }
@@ -109,6 +114,15 @@ const DesignerPageContent: React.FC = () => {
         );
       }
       // Default for Steuerstromkreis etc.
+      const disallowed = [
+        'leitung_l1',
+        'leitung_l2',
+        'leitung_l3',
+        'leitung_n',
+        'leitung_pe',
+        'netzeinspeisung_400v'
+      ];
+      if (disallowed.includes(comp.id)) return false;
       return (
         comp.category?.includes("Steuerstrom") ||
         comp.category === "Energieversorgung" ||
@@ -123,23 +137,44 @@ const DesignerPageContent: React.FC = () => {
   useEffect(() => {
     const compsParam = searchParams.get('components');
     const connsParam = searchParams.get('connections');
+    let loadedComponents: ElectricalComponent[] | null = null;
     if (compsParam) {
       try {
-        const parsed = JSON.parse(compsParam);
-        setComponents(parsed);
+        const parsed: ElectricalComponent[] = JSON.parse(compsParam);
+        let comps = parsed;
+        if (projectType === 'Steuerstromkreis') {
+          const disallowedTypes = [
+            'L1Leitung',
+            'L2Leitung',
+            'L3Leitung',
+            'NLeitung',
+            'PELeitung',
+            'Energieversorgung400V'
+          ];
+          comps = parsed.filter(c => !disallowedTypes.includes(c.type));
+        }
+        loadedComponents = comps;
+        setComponents(comps);
       } catch (e) {
         console.error('Failed to parse components from URL', e);
       }
     }
     if (connsParam) {
       try {
-        const parsed = JSON.parse(connsParam);
-        setConnections(parsed);
+        const parsed: Connection[] = JSON.parse(connsParam);
+        let filtered = parsed;
+        if (projectType === 'Steuerstromkreis' && loadedComponents) {
+          const allowedIds = new Set(loadedComponents.map(c => c.id));
+          filtered = parsed.filter(conn =>
+            allowedIds.has(conn.startComponentId) && allowedIds.has(conn.endComponentId)
+          );
+        }
+        setConnections(filtered);
       } catch (e) {
         console.error('Failed to parse connections from URL', e);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, projectType]);
 
 
   const checkShortCircuits = useCallback(() => {
