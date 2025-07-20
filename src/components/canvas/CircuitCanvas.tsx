@@ -27,8 +27,6 @@ interface CircuitCanvasProps {
   selectedConnectionId?: string | null;
   projectType?: ProjectType | null;
   showGrid?: boolean;
-  lineLength?: number;
-  onLineHandleMouseDown?: (index: number) => void;
   snapLines?: { x: number | null; y: number | null };
   onCanvasMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
   onDropComponent?: (component: PaletteComponentFirebaseData, position: Point) => void;
@@ -61,8 +59,6 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   selectedConnectionId,
   projectType,
   showGrid,
-  lineLength = 300,
-  onLineHandleMouseDown,
   snapLines,
   onCanvasMouseDown,
   onDropComponent,
@@ -139,69 +135,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       )}
       {showGrid && <rect width="100%" height="100%" fill="url(#a4grid)" />}
 
-      {projectType === 'Stromlaufplan in zusammenhängender Darstellung' && (
-        <g>
-          <defs>
-            <linearGradient id="pe-gradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#00FF00" />
-              <stop offset="50%" stopColor="#00FF00" />
-              <stop offset="50%" stopColor="#FFFF00" />
-              <stop offset="100%" stopColor="#FFFF00" />
-            </linearGradient>
-          </defs>
-          {/** Horizontal main rails */}
-          <line
-            x1={viewBoxWidth / 2 - lineLength / 2}
-            y1={10}
-            x2={viewBoxWidth / 2 + lineLength / 2}
-            y2={10}
-            stroke="#FF0000"
-            strokeWidth={2}
-          />
-          <line
-            x1={viewBoxWidth / 2 - lineLength / 2}
-            y1={20}
-            x2={viewBoxWidth / 2 + lineLength / 2}
-            y2={20}
-            stroke="#0000FF"
-            strokeWidth={2}
-          />
-          <line
-            x1={viewBoxWidth / 2 - lineLength / 2}
-            y1={30}
-            x2={viewBoxWidth / 2 + lineLength / 2}
-            y2={30}
-            stroke="url(#pe-gradient)"
-            strokeWidth={2}
-          />
-          <circle
-            cx={viewBoxWidth / 2 + lineLength / 2}
-            cy={10}
-            r={4}
-            fill="#FF0000"
-            onMouseDown={() => onLineHandleMouseDown?.(0)}
-            style={{ cursor: 'ew-resize' }}
-          />
-          <circle
-            cx={viewBoxWidth / 2 + lineLength / 2}
-            cy={20}
-            r={4}
-            fill="#0000FF"
-            onMouseDown={() => onLineHandleMouseDown?.(1)}
-            style={{ cursor: 'ew-resize' }}
-          />
-          <circle
-            cx={viewBoxWidth / 2 + lineLength / 2}
-            cy={30}
-            r={4}
-            fill="#FFFF00"
-            stroke="#00FF00"
-            strokeWidth={1}
-            onMouseDown={() => onLineHandleMouseDown?.(2)}
-            style={{ cursor: 'ew-resize' }}
-          />
-        </g>
-      )}
+
       {viewComponents.map(comp => (
         <DraggableComponent
           key={comp.id}

@@ -161,6 +161,17 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
+    case 'Energieversorgung400V':
+      iconContent = (
+        <>
+          <line x1="5" y1="8" x2="35" y2="8" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="5" y1="16" x2="35" y2="16" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="5" y1="24" x2="35" y2="24" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="5" y1="32" x2="35" y2="32" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="5" y1="38" x2="35" y2="38" stroke={symbolStrokeColor} strokeWidth="2" />
+        </>
+      );
+      break;
     default:
       iconContent = (
         <rect x="5" y="5" width="30" height="30" stroke="grey" strokeWidth="1" fill="lightgrey" />

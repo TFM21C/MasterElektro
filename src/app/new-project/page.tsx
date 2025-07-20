@@ -75,8 +75,6 @@ const DesignerPageContent: React.FC = () => {
   const [isMeasuring, setIsMeasuring] = useState(false);
   const [measurements, setMeasurements] = useState<{id: number, x: number, y: number, value: string}[]>([]);
   const [showGrid, setShowGrid] = useState(false);
-  const [lineLength, setLineLength] = useState(300);
-  const [draggingLine, setDraggingLine] = useState<number | null>(null);
   const [simulationErrors, setSimulationErrors] = useState<string[]>([]);
 
   const filteredPaletteComponents = React.useMemo(() => {
@@ -96,7 +94,8 @@ const DesignerPageContent: React.FC = () => {
           'taster_schliesser_install',
           'lampe_install',
           'steckdose_install',
-          'schuetzspule'
+          'schuetzspule',
+          'netzeinspeisung_400v'
         ];
         return allowed.includes(comp.id);
       }
@@ -471,10 +470,6 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       setDraggingWaypoint({connectionId, waypointIndex});
   }, [isSimulating]);
 
-  const handleLineHandleMouseDown = useCallback((index: number) => {
-      if (isSimulating) return;
-      setDraggingLine(index);
-  }, [isSimulating]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
     if (isSimulating) return;
@@ -582,16 +577,10 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
         })
       );
       setSnapLines({ x: null, y: null });
-    } else if (draggingLine !== null) {
-      const newLen = Math.max(
-        50,
-        Math.min(viewBoxSize.width - 20, 2 * (x - viewBoxSize.width / 2))
-      );
-      setLineLength(newLen);
     } else {
       setSnapLines({ x: null, y: null });
     }
-  }, [draggingComponentId, offset, isSimulating, draggingWaypoint, components, isSelecting, selectionStart, draggingLine, viewBoxSize]);
+  }, [draggingComponentId, offset, isSimulating, draggingWaypoint, components, isSelecting, selectionStart, viewBoxSize]);
 
   const handleMouseUpGlobal = useCallback(() => {
     if (isSimulating) {
@@ -620,7 +609,6 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
     setSelectionRect(null);
     setDraggingComponentId(null);
     setDraggingWaypoint(null);
-    setDraggingLine(null);
     setSnapLines({ x: null, y: null });
   }, [isSimulating, handleComponentMouseUpInSim, isSelecting, selectionRect, components]);
 
@@ -1149,9 +1137,6 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
                 <Button variant="outline" size="sm" onClick={zoomOut}>
                     <ZoomOut className="mr-2 h-4 w-4" />
                 </Button>
-                <div className="flex items-center gap-1">
-                    <Input type="number" value={lineLength} onChange={(e) => setLineLength(Number(e.target.value))} className="w-20" />
-                </div>
                 <Button variant="outline" size="sm" onClick={() => setShowGrid(p => !p)}>
                     <Grid className="mr-2 h-4 w-4" /> {showGrid ? 'Raster ausblenden' : 'Raster aktivieren'}
                 </Button>
@@ -1184,8 +1169,6 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             selectedConnectionId={selectedConnectionId}
             projectType={projectType}
             showGrid={showGrid}
-            lineLength={lineLength}
-            onLineHandleMouseDown={handleLineHandleMouseDown}
             snapLines={snapLines}
             selectionRect={selectionRect}
             selectedComponentIds={selectedComponentIds}

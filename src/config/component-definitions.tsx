@@ -1,6 +1,7 @@
 // Using .tsx because it contains JSX in render functions
 import type { ComponentDefinition, SimulatedComponentState } from '@/types/circuit';
 import AusschalterSvg from '@/components/svg/Ausschalter';
+import Energieversorgung400VSvg from '@/components/svg/bauteile/energieversorgung/Energieversorgung400V';
 
 export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
   '24V': {
@@ -72,6 +73,22 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
+  },
+  'Energieversorgung400V': {
+    width: 260,
+    height: 240,
+    render: (_label, _state, _displayPinLabels, _simulatedState, componentId) => (
+      <>
+        <Energieversorgung400VSvg data-component-id={componentId} />
+      </>
+    ),
+    pins: {
+      'L1': { x: 240, y: 20, label: 'L1' },
+      'L2': { x: 240, y: 60, label: 'L2' },
+      'L3': { x: 240, y: 100, label: 'L3' },
+      'N': { x: 240, y: 140, label: 'N' },
+      'PE': { x: 240, y: 180, label: 'PE' },
+    }
   },
   'Schließer': {
     width: 80,

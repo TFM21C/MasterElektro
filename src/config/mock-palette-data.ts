@@ -140,6 +140,25 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     simulation: {
       interactable: false,
       controlLogic: 'pass_through',
+    controlledBy: 'voltage',
+  }
+  },
+  {
+    id: 'netzeinspeisung_400v',
+    name: 'Netzeinspeisung 400V (L1–L3, N, PE)',
+    type: 'Energieversorgung400V',
+    abbreviation: '400V',
+    defaultLabelPrefix: 'EV',
+    category: 'Energieversorgung',
+    description: 'Fügt die fünf horizontalen Hauptversorgungsleitungen als Stromlaufplan-Bauteil hinzu',
+    hasToggleState: false,
+    hasEditablePins: false,
+    initialPinLabels: { 'L1': 'L1', 'L2': 'L2', 'L3': 'L3', 'N': 'N', 'PE': 'PE' },
+    resizable: false,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Energieversorgung400V'].width, height: COMPONENT_DEFINITIONS['Energieversorgung400V'].height },
+    simulation: {
+      interactable: false,
+      controlLogic: 'pass_through',
       controlledBy: 'voltage',
     }
   },
