@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Download, Lightbulb, Info, ChevronLeft, Play } from 'lucide-react';
+import { Download, Lightbulb, Info, ChevronLeft, Play, Gauge } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
@@ -56,8 +56,11 @@ const DesignerPageContent: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedComponentStates, setSimulatedComponentStates] = useState<{ [key: string]: SimulatedComponentState }>({});
   const [simulatedConnectionStates, setSimulatedConnectionStates] = useState<{ [key: string]: SimulatedConnectionState }>({});
+  const [connectionVoltages, setConnectionVoltages] = useState<{ [key: string]: '24V' | '0V' }>({});
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
+  const [isMeasuring, setIsMeasuring] = useState(false);
+  const [measurements, setMeasurements] = useState<{id: number, x: number, y: number, value: string}[]>([]);
 
   const filteredPaletteComponents = React.useMemo(() => {
     return MOCK_PALETTE_COMPONENTS.filter(comp => {
@@ -192,7 +195,16 @@ const DesignerPageContent: React.FC = () => {
         return acc;
       }, {} as { [key: string]: SimulatedConnectionState });
 
+      const newVoltages = connections.reduce((acc, conn) => {
+        const startKey = `${conn.startComponentId}/${conn.startPinName}`;
+        const endKey = `${conn.endComponentId}/${conn.endPinName}`;
+        const has24 = energizedFrom24V.has(startKey) || energizedFrom24V.has(endKey);
+        acc[conn.id] = has24 ? '24V' : '0V';
+        return acc;
+      }, {} as { [key: string]: '24V' | '0V' });
+
       setSimulatedConnectionStates(newConnStates);
+      setConnectionVoltages(newVoltages);
 
       if (JSON.stringify(newSimCompStates) !== JSON.stringify(currentSimStates)) {
         return newSimCompStates;
@@ -435,6 +447,8 @@ const DesignerPageContent: React.FC = () => {
         activeTimerTimeouts.current.forEach(t => clearTimeout(t.timerId));
         activeTimerTimeouts.current = [];
         setPressedComponentId(null);
+        setIsMeasuring(false);
+        setMeasurements([]);
       }
       return newSimulatingState;
     });
@@ -527,7 +541,17 @@ const DesignerPageContent: React.FC = () => {
 
 
   const handleConnectionClick = useCallback((connectionId: string, clickCoords: Point) => {
-    if (isSimulating) return;
+    if (isSimulating) {
+      if (isMeasuring) {
+        const voltage = connectionVoltages[connectionId] || '0V';
+        const id = Date.now();
+        setMeasurements(prev => [...prev, { id, x: clickCoords.x, y: clickCoords.y, value: voltage }]);
+        setTimeout(() => {
+          setMeasurements(prev => prev.filter(m => m.id !== id));
+        }, 2500);
+      }
+      return;
+    }
 
     setConnections(prev => prev.map(conn => {
         if (conn.id === connectionId) {
@@ -565,7 +589,7 @@ const DesignerPageContent: React.FC = () => {
     setSelectedConnectionId(connectionId);
     setSelectedComponentForSidebar(null);
     setIsPropertiesSidebarOpen(true);
-  }, [isSimulating, getAbsolutePinCoordinates]);
+  }, [isSimulating, isMeasuring, getAbsolutePinCoordinates, connectionVoltages]);
 
   const handleComponentMouseDownInSim = (id: string) => {
     setPressedComponentId(id);
@@ -760,6 +784,9 @@ const DesignerPageContent: React.FC = () => {
                     <Play className="mr-2 h-4 w-4" />
                     {isSimulating ? 'Simulation beenden' : 'Simulation starten'}
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => setIsMeasuring(prev => !prev)} disabled={!isSimulating} className={isMeasuring ? 'bg-primary text-primary-foreground' : ''}>
+                    <Gauge className="mr-2 h-4 w-4" /> Messmodus
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setIsAiSuggestionModalOpen(true)} disabled={isSimulating}>
                     <Lightbulb className="mr-2 h-4 w-4" /> KI Vorschlag
                 </Button>
@@ -787,6 +814,8 @@ const DesignerPageContent: React.FC = () => {
             width={canvasDimensions.width}
             height={canvasDimensions.height}
             isSimulating={isSimulating}
+            isMeasuring={isMeasuring}
+            measurements={measurements}
             simulatedConnectionStates={simulatedConnectionStates}
             simulatedComponentStates={simulatedComponentStates}
             selectedConnectionId={selectedConnectionId}
