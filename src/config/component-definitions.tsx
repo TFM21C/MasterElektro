@@ -255,7 +255,7 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 40,
     render: (label) => (
       <>
-        <rect x="1" y="1" width="48" height="38" fill="transparent" stroke="black" strokeWidth="2" />
+        <rect x="1" y="1" width="48" height="38" fill="none" stroke="black" strokeDasharray="4 2" />
         <text x="25" y="-5" textAnchor="middle" className="component-text text-xs">{label}</text>
       </>
     ),
@@ -270,25 +270,48 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     width: 30,
     height: 30,
     render: (label, _state, displayPinLabels = { 'L': 'L', 'Out': '' }, simulatedState) => {
-      const isClosed = simulatedState?.currentContactState?.L === 'closed'; // Assuming L is input and controls output
+      const isClosed = simulatedState?.currentContactState?.L === 'closed';
       return (
         <>
-          <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
-          {/* Simplified NO contact symbol inside circle */}
+          <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
           <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
           <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
           {isClosed ? (
-             <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5"/>
+            <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
           ) : (
-             <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5"/>
+            <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
           )}
           <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
-           {/* Pin labels can be omitted for small symbols or placed outside if needed */}
         </>
       );
     },
     pins: {
-      // Pins typically at edges or center for connection routing
+      'L': { x: 15, y: 1, label: 'L' },
+      'Out': { x: 15, y: 29, label: 'Out' }
+    }
+  },
+
+  'Ausschalter': {
+    width: 30,
+    height: 30,
+    render: (label, _state, displayPinLabels = { 'L': 'L', 'Out': '' }, simulatedState) => {
+      const isClosed = simulatedState?.currentContactState?.L === 'closed';
+      return (
+        <>
+          <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
+          <circle cx="15" cy="4" r="2" className="line" fill="none" />
+          <line x1="15" y1="6" x2="15" y2="12" className="line" strokeWidth="1.5" />
+          <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          {isClosed ? (
+            <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
+          ) : (
+            <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
+          )}
+          <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
+        </>
+      );
+    },
+    pins: {
       'L': { x: 15, y: 1, label: 'L' },
       'Out': { x: 15, y: 29, label: 'Out' }
     }
@@ -298,16 +321,16 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 30,
     render: (label, _state, _displayPinLabels, simulatedState) => (
       <>
+        <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
         <circle
           cx="15"
           cy="15"
-          r="14"
+          r="10"
           className="symbol stroke-2"
           style={{ fill: simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))' }}
         />
-        {/* X inside circle */}
-        <line x1="8" y1="8" x2="22" y2="22" stroke="black" strokeWidth="1.5" fill="none" />
-        <line x1="8" y1="22" x2="22" y2="8" stroke="black" strokeWidth="1.5" fill="none" />
+        <line x1="9" y1="9" x2="21" y2="21" stroke="black" strokeWidth="1.5" fill="none" />
+        <line x1="9" y1="21" x2="21" y2="9" stroke="black" strokeWidth="1.5" fill="none" />
         <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
       </>
     ),
@@ -443,10 +466,11 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 30,
     render: (label) => (
       <>
-        <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
-        <circle cx="11" cy="13" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
-        <circle cx="19" cy="13" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
-        <circle cx="15" cy="18" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+        <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
+        <path d="M5 20 a10 10 0 0 1 20 0" className="line" />
+        <line x1="12" y1="20" x2="12" y2="24" className="line" />
+        <line x1="18" y1="20" x2="18" y2="24" className="line" />
+        <line x1="15" y1="22" x2="15" y2="26" className="line" />
         <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
       </>
     ),
@@ -465,7 +489,7 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       const inactiveX = toAusgang1 ? 22 : 8;
       return (
         <>
-          <circle cx="15" cy="15" r="14" className="symbol stroke-2" />
+          <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
           <line x1="15" y1="5" x2="15" y2="15" className="line" strokeWidth="1.5" />
           <line x1="8" y1="22" x2="8" y2="25" className="line" strokeWidth="1.5" />
           <line x1="22" y1="22" x2="22" y2="25" className="line" strokeWidth="1.5" />

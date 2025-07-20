@@ -91,21 +91,20 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
     // Installation specific icons
     case 'Abzweigdose':
       iconContent = (
-        <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+        <rect x="6" y="6" width="28" height="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" strokeDasharray="4 2" />
       );
       break;
     case 'AbzweigdoseRect':
       iconContent = (
-        <rect x="6" y="10" width="28" height="20" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+        <rect x="6" y="10" width="28" height="20" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" strokeDasharray="4 2" />
       );
       break;
     case 'SchliesserInstallation':
       iconContent = (
         <>
-          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
-          {/* Simplified NO contact symbol inside */}
-          <line x1="20" y1="8" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth="2" />
-          <line x1="20" y1="22" x2="20" y2="32" stroke={symbolStrokeColor} strokeWidth="2" />
+          <rect x="6" y="6" width="28" height="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+          <line x1="20" y1="12" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="20" y1="22" x2="20" y2="28" stroke={symbolStrokeColor} strokeWidth="2" />
           <line x1="15" y1="18" x2="20" y2="22" stroke={symbolStrokeColor} strokeWidth="2" />
         </>
       );
@@ -113,28 +112,41 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
     case 'LampeInstallation':
        iconContent = (
         <>
-          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
-          <line x1="10" y1="10" x2="30" y2="30" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
-          <line x1="10" y1="30" x2="30" y2="10" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <rect x="6" y="6" width="28" height="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+          <circle cx="20" cy="20" r="10" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <line x1="12" y1="12" x2="28" y2="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
+          <line x1="12" y1="28" x2="28" y2="12" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} />
         </>
       );
       break;
     case 'Steckdose':
       iconContent = (
         <>
-          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
-          <circle cx="14" cy="16" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
-          <circle cx="26" cy="16" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
-          <circle cx="20" cy="24" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
+          <rect x="6" y="6" width="28" height="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+          <path d="M10 26 a10 10 0 0 1 20 0" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+          <line x1="18" y1="26" x2="18" y2="30" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="22" y1="26" x2="22" y2="30" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="20" y1="24" x2="20" y2="30" stroke={symbolStrokeColor} strokeWidth="2" />
         </>
       );
       break;
     case 'Wechselschalter':
       iconContent = (
         <>
-          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
-          <line x1="20" y1="8" x2="20" y2="20" stroke={symbolStrokeColor} strokeWidth="2" />
+          <rect x="6" y="6" width="28" height="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+          <line x1="20" y1="10" x2="20" y2="20" stroke={symbolStrokeColor} strokeWidth="2" />
           <line x1="12" y1="24" x2="28" y2="24" stroke={symbolStrokeColor} strokeWidth="2" />
+        </>
+      );
+      break;
+    case 'Ausschalter':
+      iconContent = (
+        <>
+          <rect x="6" y="6" width="28" height="28" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill="none" />
+          <circle cx="20" cy="9" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
+          <line x1="20" y1="12" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="20" y1="22" x2="20" y2="28" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="15" y1="18" x2="20" y2="22" stroke={symbolStrokeColor} strokeWidth="2" />
         </>
       );
       break;

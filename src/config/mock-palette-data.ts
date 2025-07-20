@@ -469,6 +469,29 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
     }
   },
   {
+    id: 'ausschalter_install',
+    name: 'Ausschalter',
+    type: 'Ausschalter',
+    abbreviation: 'A',
+    defaultLabelPrefix: 'A',
+    category: 'Installationselemente',
+    description: 'Einpoliger Ausschalter mit Rastmechanik.',
+    hasToggleState: true,
+    hasEditablePins: false,
+    initialPinLabels: { 'L': 'L', 'Out': 'Out' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Ausschalter']?.width || 30, height: COMPONENT_DEFINITIONS['Ausschalter']?.height || 30 },
+    minScale: 0.8, maxScale: 1.5, scaleStep: 0.1,
+    simulation: {
+      interactable: true,
+      controlLogic: 'toggle_on_click',
+      controlledBy: 'user',
+      initialContactState: { 'L': 'open', 'Out': 'open' },
+      outputPinStateOnEnergized: { 'L': 'closed', 'Out': 'closed' },
+      outputPinStateOnDeEnergized: { 'L': 'open', 'Out': 'open' },
+    }
+  },
+  {
     id: 'lampe_install',
     name: 'Leuchte (Installation)',
     type: 'LampeInstallation',
