@@ -56,7 +56,7 @@ const DesignerPageContent: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedComponentStates, setSimulatedComponentStates] = useState<{ [key: string]: SimulatedComponentState }>({});
   const [simulatedConnectionStates, setSimulatedConnectionStates] = useState<{ [key: string]: SimulatedConnectionState }>({});
-  const [connectionVoltages, setConnectionVoltages] = useState<{ [key: string]: '24V' | '0V' }>({});
+  const [connectionVoltages, setConnectionVoltages] = useState<{ [key: string]: '24V' | '0V' | 'L' | 'N' | 'PE' }>({});
   const activeTimerTimeouts = useRef<{compId: string, timerId: NodeJS.Timeout}[]>([]);
   const [pressedComponentId, setPressedComponentId] = useState<string | null>(null);
   const [isMeasuring, setIsMeasuring] = useState(false);
@@ -75,6 +75,7 @@ const DesignerPageContent: React.FC = () => {
         return (
           comp.category === "Hauptstromkreis" ||
           comp.category === "Energieversorgung" ||
+          comp.category === "Installationselemente" ||
           comp.category?.includes("Steuerstrom")
         );
       }
@@ -118,10 +119,16 @@ const DesignerPageContent: React.FC = () => {
       // 2. Stromausbreitung simulieren
       const energizedFrom24V = new Set<string>();
       const energizedFrom0V = new Set<string>();
+      const energizedFromPhase = new Set<string>();
+      const energizedFromNeutral = new Set<string>();
+      const energizedFromPE = new Set<string>();
 
       components.forEach(comp => {
-        if (comp.type === '24V') energizedFrom24V.add(`${comp.id}/out`);
-        if (comp.type === '0V') energizedFrom0V.add(`${comp.id}/in`);
+        if (comp.type === '24V') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFrom24V.add(`${comp.id}/${p}`));
+        if (comp.type === '0V') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFrom0V.add(`${comp.id}/${p}`));
+        if (comp.type === 'L1' || comp.type === 'L2' || comp.type === 'L3') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFromPhase.add(`${comp.id}/${p}`));
+        if (comp.type === 'N') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFromNeutral.add(`${comp.id}/${p}`));
+        if (comp.type === 'PE') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFromPE.add(`${comp.id}/${p}`));
       });
 
       const propagate = (energizedSet: Set<string>) => {
@@ -181,6 +188,9 @@ const DesignerPageContent: React.FC = () => {
 
       propagate(energizedFrom24V);
       propagate(energizedFrom0V);
+      propagate(energizedFromPhase);
+      propagate(energizedFromNeutral);
+      propagate(energizedFromPE);
 
       // 3. Komponenten- und Verbindungszustände aktualisieren
       components.forEach(comp => {
@@ -189,9 +199,14 @@ const DesignerPageContent: React.FC = () => {
           const pin1 = `${comp.id}/${simConfig.energizePins[0]}`;
           const pin2 = `${comp.id}/${simConfig.energizePins[1]}`;
 
-          const isEnergized =
-            (energizedFrom24V.has(pin1) && energizedFrom0V.has(pin2)) ||
-            (energizedFrom24V.has(pin2) && energizedFrom0V.has(pin1));
+          const hotSets = [energizedFrom24V, energizedFromPhase];
+          const returnSets = [energizedFrom0V, energizedFromNeutral, energizedFromPE];
+          const pin1Hot = hotSets.some(set => set.has(pin1));
+          const pin2Hot = hotSets.some(set => set.has(pin2));
+          const pin1Return = returnSets.some(set => set.has(pin1));
+          const pin2Return = returnSets.some(set => set.has(pin2));
+
+          const isEnergized = (pin1Hot && pin2Return) || (pin2Hot && pin1Return);
 
           newSimCompStates[comp.id].isEnergized = isEnergized;
         }
@@ -207,7 +222,13 @@ const DesignerPageContent: React.FC = () => {
         const startConducts = startCompState?.currentContactState?.[conn.startPinName] !== 'open';
         const endConducts = endCompState?.currentContactState?.[conn.endPinName] !== 'open';
 
-        const isConducting = (energizedFrom24V.has(startKey) && startConducts && energizedFrom24V.has(endKey) && endConducts) || (energizedFrom0V.has(startKey) && startConducts && energizedFrom0V.has(endKey) && endConducts);
+        const isConducting = (
+          (energizedFrom24V.has(startKey) && energizedFrom24V.has(endKey)) ||
+          (energizedFrom0V.has(startKey) && energizedFrom0V.has(endKey)) ||
+          (energizedFromPhase.has(startKey) && energizedFromPhase.has(endKey)) ||
+          (energizedFromNeutral.has(startKey) && energizedFromNeutral.has(endKey)) ||
+          (energizedFromPE.has(startKey) && energizedFromPE.has(endKey))
+        ) && startConducts && endConducts;
 
         acc[conn.id] = { isConducting };
         return acc;
@@ -216,10 +237,19 @@ const DesignerPageContent: React.FC = () => {
       const newVoltages = connections.reduce((acc, conn) => {
         const startKey = `${conn.startComponentId}/${conn.startPinName}`;
         const endKey = `${conn.endComponentId}/${conn.endPinName}`;
-        const has24 = energizedFrom24V.has(startKey) || energizedFrom24V.has(endKey);
-        acc[conn.id] = has24 ? '24V' : '0V';
+        let voltage: '24V' | '0V' | 'L' | 'N' | 'PE' = '0V';
+        if (energizedFrom24V.has(startKey) || energizedFrom24V.has(endKey)) {
+          voltage = '24V';
+        } else if (energizedFromPhase.has(startKey) || energizedFromPhase.has(endKey)) {
+          voltage = 'L';
+        } else if (energizedFromNeutral.has(startKey) || energizedFromNeutral.has(endKey)) {
+          voltage = 'N';
+        } else if (energizedFromPE.has(startKey) || energizedFromPE.has(endKey)) {
+          voltage = 'PE';
+        }
+        acc[conn.id] = voltage;
         return acc;
-      }, {} as { [key: string]: '24V' | '0V' });
+      }, {} as { [key: string]: '24V' | '0V' | 'L' | 'N' | 'PE' });
 
       setSimulatedConnectionStates(newConnStates);
       setConnectionVoltages(newVoltages);
