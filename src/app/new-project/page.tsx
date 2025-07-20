@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Download, Lightbulb, Info, ChevronLeft, Play, Gauge } from 'lucide-react';
+import { Download, Lightbulb, Info, ChevronLeft, Play, Gauge, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
@@ -37,6 +37,8 @@ const DesignerPageContent: React.FC = () => {
   const [snapLines, setSnapLines] = useState<{x: number | null; y: number | null}>({x: null, y: null});
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const RAIL_TYPES = ['24V', '0V', 'L1', 'L2', 'L3', 'N', 'PE'];
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [componentToEdit, setComponentToEdit] = useState<ElectricalComponent | null>(null);
 
@@ -51,7 +53,7 @@ const DesignerPageContent: React.FC = () => {
 
   const { toast } = useToast();
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 700 });
+  const [viewBoxSize, setViewBoxSize] = useState({ width: 800, height: 700 });
 
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedComponentStates, setSimulatedComponentStates] = useState<{ [key: string]: SimulatedComponentState }>({});
@@ -124,11 +126,18 @@ const DesignerPageContent: React.FC = () => {
       const energizedFromPE = new Set<string>();
 
       components.forEach(comp => {
-        if (comp.type === '24V') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFrom24V.add(`${comp.id}/${p}`));
-        if (comp.type === '0V') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFrom0V.add(`${comp.id}/${p}`));
-        if (comp.type === 'L1' || comp.type === 'L2' || comp.type === 'L3') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFromPhase.add(`${comp.id}/${p}`));
-        if (comp.type === 'N') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFromNeutral.add(`${comp.id}/${p}`));
-        if (comp.type === 'PE') Object.keys(COMPONENT_DEFINITIONS[comp.type].pins).forEach(p=>energizedFromPE.add(`${comp.id}/${p}`));
+        const addConnections = (set: Set<string>) => {
+          connections.forEach(conn => {
+            if (conn.startComponentId === comp.id) set.add(`${comp.id}/${conn.startPinName}`);
+            if (conn.endComponentId === comp.id) set.add(`${comp.id}/${conn.endPinName}`);
+          });
+        };
+
+        if (comp.type === '24V') addConnections(energizedFrom24V);
+        if (comp.type === '0V') addConnections(energizedFrom0V);
+        if (comp.type === 'L1' || comp.type === 'L2' || comp.type === 'L3') addConnections(energizedFromPhase);
+        if (comp.type === 'N') addConnections(energizedFromNeutral);
+        if (comp.type === 'PE') addConnections(energizedFromPE);
       });
 
       const propagate = (energizedSet: Set<string>) => {
@@ -156,7 +165,7 @@ const DesignerPageContent: React.FC = () => {
             const compDef = COMPONENT_DEFINITIONS[comp.type];
             if (!compState || !compDef) return;
 
-            const pins = Object.keys(compDef.pins);
+            const pins = Object.keys(compDef.pins || {});
             for (let a = 0; a < pins.length; a++) {
               for (let b = a + 1; b < pins.length; b++) {
                 const pinA = pins[a];
@@ -302,15 +311,26 @@ const DesignerPageContent: React.FC = () => {
     const component = components.find(c => c.id === componentId);
     if (!component) return null;
     const definition = COMPONENT_DEFINITIONS[component.type];
-    if (!definition || !definition.pins[pinName]) return null;
+    if (!definition) return null;
 
-    const pinDef = definition.pins[pinName];
     const scale = component.scale || 1;
 
-    return {
-      x: component.x + pinDef.x * scale,
-      y: component.y + pinDef.y * scale
-    };
+    if (definition.pins && definition.pins[pinName]) {
+      const pinDef = definition.pins[pinName];
+      return {
+        x: component.x + pinDef.x * scale,
+        y: component.y + pinDef.y * scale,
+      };
+    }
+
+    if (RAIL_TYPES.includes(component.type) && pinName.startsWith('rail@')) {
+      const relX = parseFloat(pinName.split('@')[1]);
+      const x = component.x + relX * scale;
+      const y = component.y + (definition.height / 2) * scale;
+      return { x, y };
+    }
+
+    return null;
   }, [components]);
 
 
@@ -453,7 +473,7 @@ const DesignerPageContent: React.FC = () => {
     const resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
-        setCanvasDimensions({ width: Math.max(width, 300), height: Math.max(height - 50, 300) });
+        setViewBoxSize({ width: Math.max(width, 300), height: Math.max(height - 50, 300) });
       }
     });
 
@@ -502,6 +522,14 @@ const DesignerPageContent: React.FC = () => {
     });
   }, [components, connections]);
 
+  const zoomIn = useCallback(() => {
+    setViewBoxSize(prev => ({ width: prev.width * 1.2, height: prev.height * 1.2 }));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setViewBoxSize(prev => ({ width: prev.width / 1.2, height: prev.height / 1.2 }));
+  }, []);
+
 
   const handlePinClick = useCallback((componentId: string, pinName: string, pinCoords: Point) => {
     if (isSimulating) return;
@@ -509,7 +537,8 @@ const DesignerPageContent: React.FC = () => {
     const targetComponent = components.find(c => c.id === componentId);
     if (!targetComponent) return;
     const targetDefinition = COMPONENT_DEFINITIONS[targetComponent.type];
-    if (!targetDefinition || !targetDefinition.pins[pinName]) return;
+    const isRail = RAIL_TYPES.includes(targetComponent.type) && pinName.startsWith('rail@');
+    if (!targetDefinition || (!isRail && !(targetDefinition.pins && targetDefinition.pins[pinName]))) return;
 
     if (connectingPin) {
       if (connectingPin.componentId === componentId && connectingPin.pinName === pinName) {
@@ -521,7 +550,7 @@ const DesignerPageContent: React.FC = () => {
         (conn.startComponentId === connectingPin.componentId && conn.startPinName === connectingPin.pinName) ||
         (conn.endComponentId === connectingPin.componentId && conn.endPinName === connectingPin.pinName)
       );
-      const isEndPinUsed = connections.some(conn =>
+      const isEndPinUsed = !isRail && connections.some(conn =>
         (conn.startComponentId === componentId && conn.startPinName === pinName) ||
         (conn.endComponentId === componentId && conn.endPinName === pinName)
       );
@@ -553,7 +582,7 @@ const DesignerPageContent: React.FC = () => {
       toast({ title: "Verbindung erstellt", description: `Zwischen ${connectingPin.componentId}/${connectingPin.pinName} und ${componentId}/${pinName}.` });
       setConnectingPin(null);
     } else {
-      const isPinAlreadyConnected = connections.some(conn =>
+      const isPinAlreadyConnected = !isRail && connections.some(conn =>
         (conn.startComponentId === componentId && conn.startPinName === pinName) ||
         (conn.endComponentId === componentId && conn.endPinName === pinName)
       );
@@ -565,7 +594,7 @@ const DesignerPageContent: React.FC = () => {
     }
   }, [isSimulating, components, connections, connectingPin, projectType, toast]);
 
-  const handleComponentClick = useCallback((id: string, isDoubleClick = false) => {
+  const handleComponentClick = useCallback((id: string, isDoubleClick = false, clickCoords?: Point) => {
     if (isSimulating) {
       toggleComponentState(id);
       return;
@@ -573,6 +602,17 @@ const DesignerPageContent: React.FC = () => {
 
     const component = components.find(c => c.id === id);
     if (!component) return;
+
+    if (connectingPin && RAIL_TYPES.includes(component.type) && clickCoords) {
+      const definition = COMPONENT_DEFINITIONS[component.type];
+      const scale = component.scale || 1;
+      const railY = component.y + (definition.height / 2) * scale;
+      let relX = (clickCoords.x - component.x) / scale;
+      relX = Math.max(0, Math.min(definition.width, relX));
+      const snappedX = component.x + relX * scale;
+      handlePinClick(id, `rail@${relX}`, { x: snappedX, y: railY });
+      return;
+    }
 
     if (isDoubleClick) {
       setComponentToEdit(component);
@@ -585,7 +625,7 @@ const DesignerPageContent: React.FC = () => {
       setSelectedConnectionId(null);
       setIsPropertiesSidebarOpen(true);
     }
-  }, [isSimulating, components, toggleComponentState]);
+  }, [isSimulating, components, toggleComponentState, connectingPin, handlePinClick]);
 
 
   const handleConnectionClick = useCallback((connectionId: string, clickCoords: Point) => {
@@ -841,6 +881,12 @@ const DesignerPageContent: React.FC = () => {
                 <Button variant="outline" size="sm" onClick={handleExportSVG} disabled={isSimulating}>
                     <Download className="mr-2 h-4 w-4" /> SVG Export
                 </Button>
+                <Button variant="outline" size="sm" onClick={zoomIn}>
+                    <ZoomIn className="mr-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={zoomOut}>
+                    <ZoomOut className="mr-2 h-4 w-4" />
+                </Button>
             </div>
         </div>
 
@@ -859,8 +905,8 @@ const DesignerPageContent: React.FC = () => {
             onConnectionClick={handleConnectionClick}
             onWaypointMouseDown={handleWaypointMouseDown}
             onWaypointDoubleClick={(connId, index) => confirmDelete('waypoint', connId, index)}
-            width={canvasDimensions.width}
-            height={canvasDimensions.height}
+            viewBoxWidth={viewBoxSize.width}
+            viewBoxHeight={viewBoxSize.height}
             isSimulating={isSimulating}
             isMeasuring={isMeasuring}
             measurements={measurements}

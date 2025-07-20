@@ -11,13 +11,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-25" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'out1': { x: 0, y: 10, label: '' },
-      'out2': { x: 25, y: 10, label: '' },
-      'out3': { x: 50, y: 10, label: '' },
-      'out4': { x: 75, y: 10, label: '' },
-      'out5': { x: 100, y: 10, label: '' }
-    }
   },
   '0V': {
     width: 100,
@@ -28,13 +21,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'in1': { x: 0, y: 10, label: '' },
-      'in2': { x: 25, y: 10, label: '' },
-      'in3': { x: 50, y: 10, label: '' },
-      'in4': { x: 75, y: 10, label: '' },
-      'in5': { x: 100, y: 10, label: '' }
-    }
   },
   'L1': {
     width: 100,
@@ -45,13 +31,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'pin1': { x: 0, y: 10, label: '' },
-      'pin2': { x: 25, y: 10, label: '' },
-      'pin3': { x: 50, y: 10, label: '' },
-      'pin4': { x: 75, y: 10, label: '' },
-      'pin5': { x: 100, y: 10, label: '' }
-    }
   },
   'L2': {
     width: 100,
@@ -62,13 +41,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'pin1': { x: 0, y: 10, label: '' },
-      'pin2': { x: 25, y: 10, label: '' },
-      'pin3': { x: 50, y: 10, label: '' },
-      'pin4': { x: 75, y: 10, label: '' },
-      'pin5': { x: 100, y: 10, label: '' }
-    }
   },
   'L3': {
     width: 100,
@@ -79,13 +51,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'pin1': { x: 0, y: 10, label: '' },
-      'pin2': { x: 25, y: 10, label: '' },
-      'pin3': { x: 50, y: 10, label: '' },
-      'pin4': { x: 75, y: 10, label: '' },
-      'pin5': { x: 100, y: 10, label: '' }
-    }
   },
   'N': {
     width: 100,
@@ -96,13 +61,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'pin1': { x: 0, y: 10, label: '' },
-      'pin2': { x: 25, y: 10, label: '' },
-      'pin3': { x: 50, y: 10, label: '' },
-      'pin4': { x: 75, y: 10, label: '' },
-      'pin5': { x: 100, y: 10, label: '' }
-    }
   },
   'PE': {
     width: 100,
@@ -113,13 +71,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
         <text x="-20" y="12" className="component-text">{label}</text>
       </>
     ),
-    pins: {
-      'pin1': { x: 0, y: 10, label: '' },
-      'pin2': { x: 25, y: 10, label: '' },
-      'pin3': { x: 50, y: 10, label: '' },
-      'pin4': { x: 75, y: 10, label: '' },
-      'pin5': { x: 100, y: 10, label: '' }
-    }
   },
   'Schließer': {
     width: 80,
