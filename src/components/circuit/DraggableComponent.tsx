@@ -79,13 +79,15 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
     }
   };
 
-  const scale = component.scale || 1;
-  const width = (component.width ?? definition.width) * scale;
-  const height = (component.height ?? definition.height) * scale;
+  const isHorizontalOnly = ['L1Leitung', 'NLeitung', 'PELeitung'].includes(component.type);
+  const scaleX = component.scale || 1;
+  const scaleY = isHorizontalOnly ? 1 : scaleX;
+  const width = (component.width ?? definition.width) * scaleX;
+  const height = (component.height ?? definition.height) * scaleY;
 
   return (
     <g
-      transform={`translate(${component.x}, ${component.y}) scale(${scale})`}
+      transform={`translate(${component.x}, ${component.y}) scale(${scaleX}, ${scaleY})`}
       onMouseDown={handleComponentMouseDown}
       onMouseUp={isSimulating ? undefined : handleComponentMouseUp}
       onClick={handleComponentClick}
@@ -137,7 +139,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
             key={pinName}
             cx={pinDef.x}
             cy={pinDef.y}
-            r={6 / scale} // Adjust pin radius inversely to scale to maintain apparent size
+            r={6 / Math.max(scaleX, scaleY)}
             fill={isSelectedPin ? 'hsl(var(--ring))' : 'hsl(var(--primary))'}
             opacity={0.6}
             className="pin-circle"
@@ -145,8 +147,8 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
               if (isSimulating) return;
               e.stopPropagation();
               // Calculate absolute pin coordinates considering the component's position and scale
-              const absolutePinX = component.x + pinDef.x * scale;
-              const absolutePinY = component.y + pinDef.y * scale;
+              const absolutePinX = component.x + pinDef.x * scaleX;
+              const absolutePinY = component.y + pinDef.y * scaleY;
               onPinClick(component.id, pinName, { x: absolutePinX, y: absolutePinY });
             }}
             style={{ cursor: isMeasuring ? 'crosshair' : 'pointer' }}

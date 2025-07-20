@@ -80,6 +80,7 @@ const DesignerPageContent: React.FC = () => {
   const filteredPaletteComponents = React.useMemo(() => {
     return MOCK_PALETTE_COMPONENTS.filter(comp => {
       if (projectType === "Installationsschaltplan") {
+        if (comp.id === 'ausschalter_install') return false;
         return (
           comp.category === "Installationselemente" ||
           comp.category === "Schalter" ||
@@ -100,7 +101,8 @@ const DesignerPageContent: React.FC = () => {
           'leitung_l2',
           'leitung_l3',
           'leitung_n',
-          'leitung_pe'
+          'leitung_pe',
+          'ausschalter_install'
         ];
         return allowed.includes(comp.id);
       }
@@ -109,7 +111,7 @@ const DesignerPageContent: React.FC = () => {
           comp.category === "Hauptstromkreis" ||
           comp.category === "Energieversorgung" ||
           comp.category === "Installationselemente" ||
-          comp.category === "Schalter" ||
+          (comp.category === "Schalter" && comp.id !== 'ausschalter_install') ||
           comp.category?.includes("Steuerstrom")
         );
       }
@@ -120,7 +122,8 @@ const DesignerPageContent: React.FC = () => {
         'leitung_l3',
         'leitung_n',
         'leitung_pe',
-        'netzeinspeisung_400v'
+        'netzeinspeisung_400v',
+        'ausschalter_install'
       ];
       if (disallowed.includes(comp.id)) return false;
       return (

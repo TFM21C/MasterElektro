@@ -33,7 +33,14 @@ export const useCircuitState = () => {
     }, []);
 
     const addConnection = useCallback((newConnection: Omit<Connection, 'id' | 'waypoints'>) => {
-         const isStartPinUsed = connections.some(conn =>
+        const startComp = components.find(c => c.id === newConnection.startComponentId);
+        const endComp = components.find(c => c.id === newConnection.endComponentId);
+        const unlimitedTypes = ['L1Leitung', 'NLeitung', 'PELeitung'];
+
+        const isStartUnlimited = startComp && unlimitedTypes.includes(startComp.type);
+        const isEndUnlimited = endComp && unlimitedTypes.includes(endComp.type);
+
+        const isStartPinUsed = connections.some(conn =>
             (conn.startComponentId === newConnection.startComponentId && conn.startPinName === newConnection.startPinName) ||
             (conn.endComponentId === newConnection.startComponentId && conn.endPinName === newConnection.startPinName)
         );
@@ -42,12 +49,12 @@ export const useCircuitState = () => {
             (conn.endComponentId === newConnection.endComponentId && conn.endPinName === newConnection.endPinName)
         );
 
-        if (isStartPinUsed || isEndPinUsed) {
+        if ((isStartPinUsed && !isStartUnlimited) || (isEndPinUsed && !isEndUnlimited)) {
             toast({ title: "Pin bereits belegt", variant: "destructive" });
             return;
         }
         setConnections(prev => [...prev, {id: `conn-${Date.now()}`, waypoints:[], ...newConnection}]);
-    }, [connections, toast]);
+    }, [components, connections, toast]);
 
     const updateConnection = useCallback((id: string, updates: Partial<Connection>) => {
         setConnections(prev => prev.map(conn => (conn.id === id ? { ...conn, ...updates } : conn)));
@@ -108,12 +115,14 @@ export const useCircuitState = () => {
         if (!component) return null;
         const definition = COMPONENT_DEFINITIONS[component.type];
         if (!definition) return null;
-        const scale = component.scale || 1;
+        const horizontalOnly = ['L1Leitung', 'NLeitung', 'PELeitung'].includes(component.type);
+        const scaleX = component.scale || 1;
+        const scaleY = horizontalOnly ? 1 : scaleX;
         if (definition.pins && definition.pins[pinName]) {
             const pinDef = definition.pins[pinName];
             return {
-                x: component.x + pinDef.x * scale,
-                y: component.y + pinDef.y * scale
+                x: component.x + pinDef.x * scaleX,
+                y: component.y + pinDef.y * scaleY
             };
         }
         return null;
