@@ -106,30 +106,7 @@ const DesignerPageContent: React.FC = () => {
     setSimulatedComponentStates(currentSimStates => {
       let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
 
-      // 1. Kontakte anhand gesteuerter Spulen aktualisieren
-      components.forEach(comp => {
-        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-        if (paletteComp?.simulation?.controlledBy === 'label_match') {
-          let isEnergized = false;
-          if (comp.parentId) {
-            const parent = components.find(c => c.id === comp.parentId);
-            const parentPalette = parent ? getPaletteComponentById(parent.firebaseComponentId) : null;
-            if (parent && parentPalette?.simulation?.affectingLabel) {
-              isEnergized = !!newSimCompStates[parent.id]?.isEnergized;
-            }
-          }
-
-          const targetState = isEnergized
-            ? paletteComp.simulation.outputPinStateOnEnergized
-            : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
-
-          if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
-            newSimCompStates[comp.id].currentContactState = { ...targetState };
-          }
-        }
-      });
-
-      // 2. Stromausbreitung simulieren
+      // 1. Stromausbreitung simulieren, um aktuelle Spulen-Zustände zu ermitteln
       const energizedFrom24V = new Set<string>();
       const energizedFrom0V = new Set<string>();
       const energizedFromPhase = new Set<string>();
@@ -212,7 +189,7 @@ const DesignerPageContent: React.FC = () => {
       propagate(energizedFromNeutral);
       propagate(energizedFromPE);
 
-      // 3. Komponenten- und Verbindungszustände aktualisieren
+      // 2. Spulen-Zustände bestimmen
       components.forEach(comp => {
         const simConfig = getPaletteComponentById(comp.firebaseComponentId)?.simulation;
         if (simConfig?.energizePins && simConfig.energizePins.length === 2) {
@@ -229,6 +206,29 @@ const DesignerPageContent: React.FC = () => {
           const isEnergized = (pin1Hot && pin2Return) || (pin2Hot && pin1Return);
 
           newSimCompStates[comp.id].isEnergized = isEnergized;
+        }
+      });
+
+      // 3. Kontakte anhand aktivierter Spulen aktualisieren
+      const energizedLabels = new Set<string>();
+      components.forEach(comp => {
+        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+        if (paletteComp?.simulation?.affectingLabel && newSimCompStates[comp.id]?.isEnergized) {
+          energizedLabels.add(comp.label);
+        }
+      });
+
+      components.forEach(comp => {
+        const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+        if (paletteComp?.simulation?.controlledBy === 'label_match') {
+          const isEnergized = energizedLabels.has(comp.label);
+          const targetState = isEnergized
+            ? paletteComp.simulation.outputPinStateOnEnergized
+            : (paletteComp.simulation.outputPinStateOnDeEnergized || paletteComp.simulation.initialContactState);
+
+          if (JSON.stringify(newSimCompStates[comp.id].currentContactState) !== JSON.stringify(targetState)) {
+            newSimCompStates[comp.id].currentContactState = { ...targetState };
+          }
         }
       });
 
