@@ -86,7 +86,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   return (
     <g
       transform={`translate(${component.x}, ${component.y}) scale(${scale})`}
-      onMouseDown={isSimulating ? undefined : handleComponentMouseDown}
+      onMouseDown={handleComponentMouseDown}
       onMouseUp={isSimulating ? undefined : handleComponentMouseUp}
       onClick={handleComponentClick}
       onDoubleClick={isSimulating ? undefined : handleComponentDoubleClick}
