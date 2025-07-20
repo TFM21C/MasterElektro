@@ -1,5 +1,7 @@
 CircuitCraft - Roadmap (Angepasste Version)
 ===
+👉 Für alle aktuellen Tasks im Stromlaufplan-Modul siehe:  
+[`/docs/codex/codex-tasks-juli.md`](docs/codex/codex-tasks-juli.md)
 
 ## Vision
 CircuitCraft ist eine kostenlose, webbasierte Lernplattform, die es Auszubildenden der Elektrotechnik ermöglicht, elektrische Schaltungen intuitiv zu entwerfen, zu simulieren und zu erlernen. Unser Ziel ist es, die bestmöglichen digitalen Werkzeuge für die Ausbildung bereitzustellen und eine Alternative zu teurer, lizenzbasierter Software zu schaffen.
