@@ -46,8 +46,8 @@ angelegt werden.
 
 ### 4. **Tastenkürzel & Mehrfachbearbeitung**
 
-- [ ] **ESC** → laufenden Pin-Vorgang abbrechen
-- [ ] **DEL** → löscht **alle markierten Bauteile gleichzeitig**
+- [x] **ESC** → laufenden Pin-Vorgang abbrechen
+- [x] **DEL** → löscht **alle markierten Bauteile gleichzeitig**
 
 ---
 
