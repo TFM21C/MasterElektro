@@ -37,6 +37,13 @@ const DesignerPageContent: React.FC = () => {
   const [snapLines, setSnapLines] = useState<{x: number | null; y: number | null}>({x: null, y: null});
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<Point | null>(null);
+  const [selectionRect, setSelectionRect] = useState<{x:number; y:number; width:number; height:number} | null>(null);
+  const dragStartPositionsRef = useRef<{[id:string]: Point}>({});
+  const draggingIdsRef = useRef<string[]>([]);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [componentToEdit, setComponentToEdit] = useState<ElectricalComponent | null>(null);
 
@@ -322,24 +329,32 @@ const DesignerPageContent: React.FC = () => {
   }, [pressedComponentId, toggleComponentState]);
 
 
-  const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
+const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
     if (isSimulating) {
       handleComponentMouseDownInSim(id);
       return;
     }
     const component = components.find(c => c.id === id);
     if (component && svgRef.current) {
-      setDraggingComponentId(id);
       const CTM = svgRef.current.getScreenCTM();
       if (CTM) {
         const svgPoint = svgRef.current.createSVGPoint();
         svgPoint.x = e.clientX;
         svgPoint.y = e.clientY;
         const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
-        setOffset({
-          x: pointInSvg.x - component.x,
-          y: pointInSvg.y - component.y,
+        setOffset({ x: pointInSvg.x - component.x, y: pointInSvg.y - component.y });
+        setDraggingComponentId(id);
+        dragStartPositionsRef.current = {};
+        const ids = selectedComponentIds.includes(id) ? selectedComponentIds : [id];
+        draggingIdsRef.current = ids;
+        components.forEach(c => {
+          if (ids.includes(c.id)) {
+            dragStartPositionsRef.current[c.id] = { x: c.x, y: c.y };
+          }
         });
+        if (!selectedComponentIds.includes(id)) {
+          setSelectedComponentIds([id]);
+        }
       }
     }
   };
@@ -348,6 +363,22 @@ const DesignerPageContent: React.FC = () => {
       if (isSimulating) return;
       setDraggingWaypoint({connectionId, waypointIndex});
   }, [isSimulating]);
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (isSimulating) return;
+    if (e.target !== svgRef.current) return;
+    if (!svgRef.current) return;
+    const CTM = svgRef.current.getScreenCTM();
+    if (!CTM) return;
+    const svgPoint = svgRef.current.createSVGPoint();
+    svgPoint.x = e.clientX;
+    svgPoint.y = e.clientY;
+    const pointInSvg = svgPoint.matrixTransform(CTM.inverse());
+    setIsSelecting(true);
+    setSelectionStart(pointInSvg);
+    setSelectionRect({ x: pointInSvg.x, y: pointInSvg.y, width: 0, height: 0 });
+    setSelectedComponentIds([]);
+  };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!svgRef.current) return;
@@ -361,10 +392,17 @@ const DesignerPageContent: React.FC = () => {
 
     setCurrentMouseSvgCoords({ x, y });
 
-    if (draggingComponentId && !isSimulating) {
+    if (isSelecting && selectionStart) {
+      const rect = {
+        x: Math.min(selectionStart.x, x),
+        y: Math.min(selectionStart.y, y),
+        width: Math.abs(x - selectionStart.x),
+        height: Math.abs(y - selectionStart.y)
+      };
+      setSelectionRect(rect);
+    } else if (draggingComponentId && !isSimulating) {
       const dragged = components.find(c => c.id === draggingComponentId);
       if (!dragged) return;
-
       let newX = x - offset.x;
       let newY = y - offset.y;
       let snapX: number | null = null;
@@ -381,7 +419,7 @@ const DesignerPageContent: React.FC = () => {
       const TOLERANCE = 5;
 
       components.forEach(comp => {
-        if (comp.id === dragged.id) return;
+        if (draggingIdsRef.current.includes(comp.id)) return;
         const def = COMPONENT_DEFINITIONS[comp.type];
         const scale = comp.scale || 1;
         const width = (comp.width ?? def.width) * scale;
@@ -408,10 +446,17 @@ const DesignerPageContent: React.FC = () => {
 
       setSnapLines({ x: snapX, y: snapY });
 
+      const deltaX = newX - dragStartPositionsRef.current[draggingComponentId].x;
+      const deltaY = newY - dragStartPositionsRef.current[draggingComponentId].y;
+
       setComponents(prevComponents =>
-        prevComponents.map(comp =>
-          comp.id === draggingComponentId ? { ...comp, x: newX, y: newY } : comp
-        )
+        prevComponents.map(comp => {
+          if (draggingIdsRef.current.includes(comp.id)) {
+            const start = dragStartPositionsRef.current[comp.id];
+            return { ...comp, x: start.x + deltaX, y: start.y + deltaY };
+          }
+          return comp;
+        })
       );
     } else if (draggingWaypoint) {
       setConnections(prev =>
@@ -428,16 +473,37 @@ const DesignerPageContent: React.FC = () => {
     } else {
       setSnapLines({ x: null, y: null });
     }
-  }, [draggingComponentId, offset, isSimulating, draggingWaypoint, components]);
+  }, [draggingComponentId, offset, isSimulating, draggingWaypoint, components, isSelecting, selectionStart]);
 
   const handleMouseUpGlobal = useCallback(() => {
     if (isSimulating) {
       handleComponentMouseUpInSim();
     }
+    if (isSelecting && selectionRect) {
+      const ids: string[] = [];
+      components.forEach(comp => {
+        const def = COMPONENT_DEFINITIONS[comp.type];
+        const scale = comp.scale || 1;
+        const width = (comp.width ?? def.width) * scale;
+        const height = (comp.height ?? def.height) * scale;
+        if (
+          comp.x + width >= selectionRect.x &&
+          comp.x <= selectionRect.x + selectionRect.width &&
+          comp.y + height >= selectionRect.y &&
+          comp.y <= selectionRect.y + selectionRect.height
+        ) {
+          ids.push(comp.id);
+        }
+      });
+      setSelectedComponentIds(ids);
+    }
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionRect(null);
     setDraggingComponentId(null);
     setDraggingWaypoint(null);
     setSnapLines({ x: null, y: null });
-  }, [isSimulating, handleComponentMouseUpInSim]);
+  }, [isSimulating, handleComponentMouseUpInSim, isSelecting, selectionRect, components]);
 
 
   useEffect(() => {
@@ -854,6 +920,7 @@ const DesignerPageContent: React.FC = () => {
             getAbsolutePinCoordinates={getAbsolutePinCoordinates}
             onMouseDownComponent={handleMouseDownComponent}
             onMouseUpComponent={handleComponentMouseUpInSim}
+            onCanvasMouseDown={handleCanvasMouseDown}
             onPinClick={handlePinClick}
             onComponentClick={handleComponentClick}
             onConnectionClick={handleConnectionClick}
@@ -869,6 +936,8 @@ const DesignerPageContent: React.FC = () => {
             selectedConnectionId={selectedConnectionId}
             projectType={projectType}
             snapLines={snapLines}
+            selectionRect={selectionRect}
+            selectedComponentIds={selectedComponentIds}
           />
         </div>
 
