@@ -216,6 +216,21 @@ const DesignerPageContent: React.FC = () => {
     };
     setComponents(prev => [...prev, newComponent]);
   };
+
+  const addComponentAtPosition = (paletteItem: PaletteComponentFirebaseData, position: Point) => {
+    const newId = `${paletteItem.id.replace(/[^a-z0-9]/gi, '')}-${Date.now()}`;
+    const newComponent: ElectricalComponent = {
+      id: newId,
+      type: paletteItem.type,
+      firebaseComponentId: paletteItem.id,
+      x: position.x,
+      y: position.y,
+      label: `${paletteItem.defaultLabelPrefix}${components.filter(c => c.type === paletteItem.type).length + 1}`,
+      displayPinLabels: { ...(paletteItem.initialPinLabels || {}) },
+      scale: 1.0,
+    };
+    setComponents(prev => [...prev, newComponent]);
+  };
   
   // ... other handlers
   const getAbsolutePinCoordinates = () => ({x:0, y:0}); // Simplified
@@ -255,6 +270,7 @@ const DesignerPageContent: React.FC = () => {
                     simulatedComponentStates={simulatedComponentStates}
                     selectedConnectionId={selectedConnectionId}
                     projectType={projectType}
+                    onDropComponent={addComponentAtPosition}
                 />
             </div>
         </div>

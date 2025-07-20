@@ -1,6 +1,6 @@
 import type React from 'react';
 import DraggableComponent from '@/components/circuit/DraggableComponent';
-import type { ElectricalComponent, Connection, Point, SimulatedConnectionState, SimulatedComponentState, ProjectType } from '@/types/circuit';
+import type { ElectricalComponent, Connection, Point, SimulatedConnectionState, SimulatedComponentState, ProjectType, PaletteComponentFirebaseData } from '@/types/circuit';
 import { renderView } from '@/lib/view-renderer';
 
 interface CircuitCanvasProps {
@@ -31,6 +31,7 @@ interface CircuitCanvasProps {
   onLineHandleMouseDown?: (index: number) => void;
   snapLines?: { x: number | null; y: number | null };
   onCanvasMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
+  onDropComponent?: (component: PaletteComponentFirebaseData, position: Point) => void;
   selectionRect?: { x: number; y: number; width: number; height: number } | null;
   selectedComponentIds?: string[];
 }
@@ -63,6 +64,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   onLineHandleMouseDown,
   snapLines,
   onCanvasMouseDown,
+  onDropComponent,
   selectionRect,
   selectedComponentIds
 }) => {
@@ -72,6 +74,32 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     : { components, connections };
   const viewComponents = viewData.components;
   const viewConnections = viewData.connections;
+
+  const handleDragOver = (e: React.DragEvent<SVGSVGElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    if (!onDropComponent) return;
+    const data = e.dataTransfer.getData('application/json');
+    if (!data) return;
+    try {
+      const comp = JSON.parse(data) as PaletteComponentFirebaseData;
+      if (svgRef.current) {
+        const ctm = svgRef.current.getScreenCTM();
+        if (ctm) {
+          const pt = svgRef.current.createSVGPoint();
+          pt.x = e.clientX;
+          pt.y = e.clientY;
+          const local = pt.matrixTransform(ctm.inverse());
+          onDropComponent(comp, { x: local.x, y: local.y });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse drag data', err);
+    }
+  };
 
   const getLineColor = (connection: Connection, isConducting: boolean) => {
     if (isSimulating) {
@@ -97,6 +125,8 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       data-testid="circuit-canvas"
       style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
       onMouseDown={onCanvasMouseDown}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       {showGrid && (
         <defs>

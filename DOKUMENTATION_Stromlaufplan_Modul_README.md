@@ -34,6 +34,10 @@ Dieses Repository dokumentiert die visuelle, technische und funktionale Spezifik
 - Kurzschluss-Erkennung (L direkt auf N/PE ohne Last → Fehler)
 - Fehler-Panel mit Fehlermeldungen im Klartext
 
+### Bauteil-Bibliothek
+- Linkes Flyout-Menü mit Drag-&-Drop-Unterstützung
+- Zeigt ausschließlich Bauteile des ZD-Moduls
+
 ---
 
 ## 💡 Ziel
