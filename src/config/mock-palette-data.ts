@@ -271,6 +271,72 @@ export const MOCK_PALETTE_COMPONENTS: PaletteComponentFirebaseData[] = [
       energizePins: ['L', 'N'],
     }
   },
+  {
+    id: 'steckdose_install',
+    name: 'Steckdose',
+    type: 'Steckdose',
+    abbreviation: 'SD',
+    defaultLabelPrefix: 'SD',
+    category: 'Installationselemente',
+    description: 'Schutzkontaktsteckdose.',
+    hasToggleState: false,
+    hasEditablePins: false,
+    initialPinLabels: { 'L': 'L', 'N': 'N', 'PE': 'PE' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Steckdose']?.width || 30, height: COMPONENT_DEFINITIONS['Steckdose']?.height || 30 },
+    minScale: 0.8, maxScale: 1.5, scaleStep: 0.1,
+    simulation: {
+      interactable: false,
+      controlLogic: 'pass_through',
+      controlledBy: 'voltage',
+    }
+  },
+  {
+    id: 'wechselschalter_install',
+    name: 'Wechselschalter',
+    type: 'Wechselschalter',
+    abbreviation: 'W',
+    defaultLabelPrefix: 'W',
+    category: 'Installationselemente',
+    description: 'Schalter mit zwei Ausgängen.',
+    hasToggleState: true,
+    hasEditablePins: false,
+    initialPinLabels: { 'L': 'L', 'Ausgang1': '1', 'Ausgang2': '2' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Wechselschalter']?.width || 30, height: COMPONENT_DEFINITIONS['Wechselschalter']?.height || 30 },
+    minScale: 0.8, maxScale: 1.5, scaleStep: 0.1,
+    simulation: {
+      interactable: true,
+      controlLogic: 'toggle_on_click',
+      controlledBy: 'user',
+      initialContactState: { 'L': 'closed', 'Ausgang1': 'closed', 'Ausgang2': 'open' },
+      outputPinStateOnEnergized: { 'L': 'closed', 'Ausgang1': 'open', 'Ausgang2': 'closed' },
+      outputPinStateOnDeEnergized: { 'L': 'closed', 'Ausgang1': 'closed', 'Ausgang2': 'open' },
+    }
+  },
+  {
+    id: 'grenztaster_sensor',
+    name: 'Grenztaster',
+    type: 'Grenztaster',
+    abbreviation: 'G',
+    defaultLabelPrefix: 'G',
+    category: 'Sensoren',
+    description: 'Mechanischer Grenztaster als Sensor.',
+    hasToggleState: true,
+    hasEditablePins: false,
+    initialPinLabels: { 'in': 'in', 'out': 'out' },
+    resizable: true,
+    defaultSize: { width: COMPONENT_DEFINITIONS['Grenztaster']?.width || 30, height: COMPONENT_DEFINITIONS['Grenztaster']?.height || 30 },
+    minScale: 0.8, maxScale: 1.5, scaleStep: 0.1,
+    simulation: {
+      interactable: true,
+      controlLogic: 'toggle_on_press',
+      controlledBy: 'user',
+      initialContactState: { 'in': 'open', 'out': 'open' },
+      outputPinStateOnEnergized: { 'in': 'closed', 'out': 'closed' },
+      outputPinStateOnDeEnergized: { 'in': 'open', 'out': 'open' },
+    }
+  },
 ];
 
 export const getPaletteComponentById = (id: string | undefined): PaletteComponentFirebaseData | undefined => {
