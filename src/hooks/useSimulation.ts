@@ -50,10 +50,26 @@ export const useSimulation = (isSimulating: boolean, components: ElectricalCompo
 
     const runSimulationStep = useCallback(() => {
         let hasChanged = false;
-        
+
         setSimulatedComponentStates(currentSimStates => {
             let newSimCompStates = JSON.parse(JSON.stringify(currentSimStates));
 
+            // Phase 1: determine energized pins based on current contact states
+            const phase1 = propagatePower(components, connections, newSimCompStates);
+
+            // Update coil states based on phase 1 results
+            components.forEach(comp => {
+                const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
+                const simConfig = paletteComp?.simulation;
+                if (!simConfig) return;
+                const isNowEnergized = (simConfig.energizePins || []).every(pin => phase1.energizedPins.has(`${comp.id}/${pin}`));
+                if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
+                    newSimCompStates[comp.id].isEnergized = isNowEnergized;
+                    hasChanged = true;
+                }
+            });
+
+            // Update contact states based on energized coils
             components.forEach(comp => {
                 const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
                 if (paletteComp?.simulation?.controlledBy === 'label_match') {
@@ -67,21 +83,11 @@ export const useSimulation = (isSimulating: boolean, components: ElectricalCompo
                 }
             });
 
-            const { energizedPins } = propagatePower(components, connections, newSimCompStates);
-
-            components.forEach(comp => {
-                const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
-                const simConfig = paletteComp?.simulation;
-                if (!simConfig) return;
-                const isNowEnergized = (simConfig.energizePins || []).every(pin => energizedPins.has(`${comp.id}/${pin}`));
-                if (newSimCompStates[comp.id].isEnergized !== isNowEnergized) {
-                    newSimCompStates[comp.id].isEnergized = isNowEnergized;
-                    hasChanged = true;
-                }
-            });
+            // Phase 2: propagate again using updated contacts for connection visualization
+            const phase2 = propagatePower(components, connections, newSimCompStates);
 
             const newSimConnStates = connections.reduce((acc, conn) => {
-                acc[conn.id] = { isConducting: energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`) };
+                acc[conn.id] = { isConducting: phase2.energizedPins.has(`${conn.startComponentId}/${conn.startPinName}`) && phase2.energizedPins.has(`${conn.endComponentId}/${conn.endPinName}`) };
                 return acc;
             }, {} as { [key: string]: SimulatedConnectionState });
 
