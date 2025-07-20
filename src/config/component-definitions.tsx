@@ -12,7 +12,11 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       </>
     ),
     pins: {
-      'out': { x: 100, y: 10, label: '' }
+      'out1': { x: 0, y: 10, label: '' },
+      'out2': { x: 25, y: 10, label: '' },
+      'out3': { x: 50, y: 10, label: '' },
+      'out4': { x: 75, y: 10, label: '' },
+      'out5': { x: 100, y: 10, label: '' }
     }
   },
   '0V': {
@@ -25,7 +29,11 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       </>
     ),
     pins: {
-      'in': { x: 100, y: 10, label: '' }
+      'in1': { x: 0, y: 10, label: '' },
+      'in2': { x: 25, y: 10, label: '' },
+      'in3': { x: 50, y: 10, label: '' },
+      'in4': { x: 75, y: 10, label: '' },
+      'in5': { x: 100, y: 10, label: '' }
     }
   },
   'Schließer': {
