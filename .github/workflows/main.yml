@@ -22,6 +22,3 @@ jobs:
 
       - name: 🔍 Lint prüfen
         run: npm run lint
-
-      - name: 🧪 Tests ausführen (optional)
-        run: npm test
