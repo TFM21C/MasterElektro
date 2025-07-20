@@ -156,12 +156,12 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 75,
     render: (label, _state, displayPinLabels = { 'X1': 'X1', 'X2': 'X2' }, simulatedState) => (
       <>
-        <circle 
-            cx="37.5" 
-            cy="37.5" 
-            r="25" 
+        <circle
+            cx="37.5"
+            cy="37.5"
+            r="25"
             className={`symbol transition-all duration-300 ${simulatedState?.isEnergized ? 'lamp-glow' : ''}`}
-            fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} 
+            style={{ fill: simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))' }}
         />
         <line
             x1={37.5 - 25 / Math.sqrt(2)}
@@ -281,7 +281,13 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 30,
     render: (label, _state, _displayPinLabels, simulatedState) => (
       <>
-        <circle cx="15" cy="15" r="14" className="symbol stroke-2" fill={simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))'} />
+        <circle
+          cx="15"
+          cy="15"
+          r="14"
+          className="symbol stroke-2"
+          style={{ fill: simulatedState?.isEnergized ? 'yellow' : 'hsl(var(--card))' }}
+        />
         {/* X inside circle */}
         <line x1="8" y1="8" x2="22" y2="22" stroke="black" strokeWidth="1.5" fill="none" />
         <line x1="8" y1="22" x2="22" y2="8" stroke="black" strokeWidth="1.5" fill="none" />
