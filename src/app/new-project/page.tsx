@@ -337,7 +337,7 @@ const DesignerPageContent: React.FC = () => {
       }
       return currentSimStates;
     });
-  }, [components, connections]);
+  }, [components, connections, checkShortCircuits]);
 
   // Trigger simulation whenever component states change while simulation is active
   useEffect(() => {
@@ -440,7 +440,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       }
     }
   };
-  
+
   const handleWaypointMouseDown = useCallback((connectionId: string, waypointIndex: number) => {
       if (isSimulating) return;
       setDraggingWaypoint({connectionId, waypointIndex});
@@ -1051,14 +1051,15 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
             showGrid={showGrid}
             snapLines={snapLines}
             selectionRect={selectionRect}
-          selectedComponentIds={selectedComponentIds}
-        />
+            selectedComponentIds={selectedComponentIds}
+          />
+        </div>
+
         {simulationErrors.length > 0 && (
           <div className="p-2 text-red-600" data-testid="error-panel">
             {simulationErrors.map((e, i) => (<div key={i}>{e}</div>))}
           </div>
         )}
-        </div>
 
         <Accordion type="single" collapsible className="w-full p-4 border-t border-border">
           <AccordionItem value="info">
@@ -1079,22 +1080,22 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
 
       {isPropertiesSidebarOpen && (selectedComponentForSidebar || selectedConnectionId) && (
         <div className={`transition-all duration-300 ease-in-out ${isPropertiesSidebarOpen ? 'w-80' : 'w-0'} overflow-hidden shrink-0`}>
-             <PropertiesSidebar
-                component={selectedComponentForSidebar}
-                paletteComponent={selectedComponentForSidebar ? getPaletteComponentById(selectedComponentForSidebar.firebaseComponentId) : undefined}
-                connection={selectedConnectionId ? connections.find(c => c.id === selectedConnectionId) : undefined}
-                allComponents={components}
-                connections={connections}
-                onClose={handleClosePropertiesSidebar}
-                onUpdateComponent={handleUpdateComponentFromSidebar}
-                onDeleteComponent={(id) => confirmDelete('component', id)}
-                onDeleteConnection={handleDeleteConnectionFromSidebar}
-                onUpdateConnectionEndpoint={handleUpdateConnectionEndpoint}
-                onUpdateConnection={handleUpdateConnection}
-                onComponentClick={handleComponentClick}
-                isSimulating={isSimulating}
-                projectType={projectType}
-              />
+          <PropertiesSidebar
+            component={selectedComponentForSidebar}
+            paletteComponent={selectedComponentForSidebar ? getPaletteComponentById(selectedComponentForSidebar.firebaseComponentId) : undefined}
+            connection={selectedConnectionId ? connections.find(c => c.id === selectedConnectionId) : undefined}
+            allComponents={components}
+            connections={connections}
+            onClose={handleClosePropertiesSidebar}
+            onUpdateComponent={handleUpdateComponentFromSidebar}
+            onDeleteComponent={(id) => confirmDelete('component', id)}
+            onDeleteConnection={handleDeleteConnectionFromSidebar}
+            onUpdateConnectionEndpoint={handleUpdateConnectionEndpoint}
+            onUpdateConnection={handleUpdateConnection}
+            onComponentClick={handleComponentClick}
+            isSimulating={isSimulating}
+            projectType={projectType}
+          />
         </div>
       )}
 
