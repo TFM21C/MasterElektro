@@ -422,10 +422,14 @@ const DesignerPageContent: React.FC = () => {
 
   const handleComponentMouseUpInSim = useCallback(() => {
     if (pressedComponentId) {
-      toggleComponentState(pressedComponentId);
+      const comp = components.find(c => c.id === pressedComponentId);
+      const simConfig = getPaletteComponentById(comp?.firebaseComponentId)?.simulation;
+      if (simConfig?.controlLogic === 'toggle_on_press') {
+        toggleComponentState(pressedComponentId);
+      }
       setPressedComponentId(null);
     }
-  }, [pressedComponentId, toggleComponentState]);
+  }, [pressedComponentId, toggleComponentState, components]);
 
 
 const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -757,7 +761,11 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
 
   const handleComponentClick = useCallback((id: string, isDoubleClick = false, clickCoords?: Point) => {
     if (isSimulating) {
-      toggleComponentState(id);
+      const comp = components.find(c => c.id === id);
+      const simConfig = getPaletteComponentById(comp?.firebaseComponentId)?.simulation;
+      if (simConfig?.controlLogic === 'toggle_on_click') {
+        toggleComponentState(id);
+      }
       return;
     }
 
@@ -841,8 +849,13 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
   }, [isSimulating, isMeasuring, getAbsolutePinCoordinates, connectionVoltages]);
 
   const handleComponentMouseDownInSim = (id: string) => {
-    setPressedComponentId(id);
-    toggleComponentState(id);
+    const comp = components.find(c => c.id === id);
+    const simConfig = getPaletteComponentById(comp?.firebaseComponentId)?.simulation;
+    if (!simConfig?.interactable) return;
+    if (simConfig.controlLogic === 'toggle_on_press') {
+      setPressedComponentId(id);
+      toggleComponentState(id);
+    }
   };
 
   const handleSaveComponentChanges = useCallback((id: string, newLabel: string, newPinLabels: Record<string, string>) => {
