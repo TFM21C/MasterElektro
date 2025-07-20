@@ -51,6 +51,12 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
     }
   };
 
+  const handleParentChange = (newParentId: string) => {
+    if (component) {
+      onUpdateComponent(component.id, { parentId: newParentId || null });
+    }
+  };
+
   const handlePinLabelChange = (pinName: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (component) {
       const newPinLabels = {
@@ -148,6 +154,14 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   const isResizable = component && paletteComponent && paletteComponent.resizable === true;
   const currentScale = component?.scale || 1.0;
 
+  const controlledByLabel =
+    component && paletteComponent?.simulation?.controlledBy === 'label_match';
+  const controllingOptions = controlledByLabel
+    ? allComponents.filter(c =>
+        getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
+      )
+    : [];
+
   const startComponent = connection ? allComponents.find(c => c.id === connection.startComponentId) : null;
   const endComponent = connection ? allComponents.find(c => c.id === connection.endComponentId) : null;
   const startPinDef = startComponent ? COMPONENT_DEFINITIONS[startComponent.type]?.pins?.[connection!.startPinName] : null;
@@ -215,6 +229,28 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
                 disabled={isSimulating}
               />
             </div>
+
+            {controlledByLabel && (
+              <div>
+                <Label htmlFor="parent-select" className="text-sm font-medium text-muted-foreground">
+                  Gesteuert von:
+                </Label>
+                <Select
+                  value={component.parentId || ''}
+                  onValueChange={handleParentChange}
+                >
+                  <SelectTrigger id="parent-select" className="mt-1">
+                    <SelectValue placeholder="Steuernde Spule wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Keine</SelectItem>
+                    {controllingOptions.map(opt => (
+                      <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {isResizable && (
               <div>
