@@ -19,6 +19,8 @@ interface CircuitCanvasProps {
   width: number;
   height: number;
   isSimulating: boolean;
+  isMeasuring: boolean;
+  measurements: {id: number, x: number, y: number, value: string}[];
   simulatedConnectionStates: { [key: string]: SimulatedConnectionState };
   simulatedComponentStates: { [key: string]: SimulatedComponentState };
   selectedConnectionId?: string | null;
@@ -43,6 +45,8 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   width,
   height,
   isSimulating,
+  isMeasuring,
+  measurements,
   simulatedConnectionStates,
   simulatedComponentStates,
   selectedConnectionId,
@@ -72,6 +76,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       viewBox={`0 0 ${width} ${height}`}
       className="border border-border bg-card rounded-lg shadow-inner flex-grow"
       data-testid="circuit-canvas"
+      style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
     >
       {components.map(comp => (
         <DraggableComponent
@@ -83,6 +88,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           onComponentClick={onComponentClick}
           connectingPin={connectingPin ? {componentId: connectingPin.componentId, pinName: connectingPin.pinName} : null}
           isSimulating={isSimulating}
+          isMeasuring={isMeasuring}
           simulatedState={simulatedComponentStates[comp.id]}
         />
       ))}
@@ -120,7 +126,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                     }
                  }
               }}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: isMeasuring ? 'crosshair' : 'pointer' }}
             />
             {/* Invisible wider line for easier clicking */}
             <path
@@ -141,6 +147,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                     }
                  }
               }}
+              style={{ cursor: isMeasuring ? 'crosshair' : 'pointer' }}
             />
              {!isSimulating && conn.waypoints?.map((wp, index) => (
                 <circle
@@ -159,7 +166,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                         e.stopPropagation();
                         onWaypointDoubleClick(conn.id, index);
                      }}
-                    style={{ cursor: 'move' }}
+                    style={{ cursor: isMeasuring ? 'crosshair' : 'move' }}
                 />
             ))}
           </g>
@@ -197,6 +204,12 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           strokeDasharray="4 2"
         />
       )}
+
+      {measurements.map(m => (
+        <text key={m.id} x={m.x} y={m.y} fill="hsl(var(--destructive))" fontSize="12px" textAnchor="middle">
+          {m.value}
+        </text>
+      ))}
     </svg>
   );
 };

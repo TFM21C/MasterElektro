@@ -114,6 +114,36 @@ const PaletteIcon: React.FC<PaletteIconProps> = ({ type }) => {
         </>
       );
       break;
+    case 'Steckdose':
+      iconContent = (
+        <>
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <circle cx="14" cy="16" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
+          <circle cx="26" cy="16" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
+          <circle cx="20" cy="24" r="3" stroke={symbolStrokeColor} strokeWidth="2" fill="none" />
+        </>
+      );
+      break;
+    case 'Wechselschalter':
+      iconContent = (
+        <>
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <line x1="20" y1="8" x2="20" y2="20" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="12" y1="24" x2="28" y2="24" stroke={symbolStrokeColor} strokeWidth="2" />
+        </>
+      );
+      break;
+    case 'Grenztaster':
+      iconContent = (
+        <>
+          <circle cx="20" cy="20" r="18" stroke={symbolStrokeColor} strokeWidth={paletteStrokeWidth} fill={symbolFillColor} />
+          <line x1="20" y1="8" x2="20" y2="18" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="20" y1="22" x2="20" y2="32" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="14" y1="18" x2="20" y2="22" stroke={symbolStrokeColor} strokeWidth="2" />
+          <line x1="8" y1="6" x2="14" y2="12" stroke={symbolStrokeColor} strokeWidth="2" />
+        </>
+      );
+      break;
     default:
       iconContent = (
         <rect x="5" y="5" width="30" height="30" stroke="grey" strokeWidth="1" fill="lightgrey" />
