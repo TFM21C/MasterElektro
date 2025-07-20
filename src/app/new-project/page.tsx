@@ -826,10 +826,24 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       }
     }
 
+    const simConfig = paletteItem.simulation;
+
+    let parentId: string | null = null;
+    if (simConfig?.controlledBy === 'label_match') {
+      const parent = components.find(c =>
+        c.label === newLabel &&
+        getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
+      );
+      if (parent) {
+        parentId = parent.id;
+      }
+    }
+
     const newComponent: ElectricalComponent = {
       id: newId,
       type: paletteItem.type,
       firebaseComponentId: paletteItem.id,
+      parentId,
       x: initX,
       y: initY,
       label: newLabel,
@@ -839,7 +853,20 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       width: null,
       height: null,
     };
-    setComponents(prev => [...prev, newComponent]);
+
+    setComponents(prev => {
+      let updated = [...prev, newComponent];
+      if (simConfig?.affectingLabel) {
+        updated = updated.map(c => {
+          const cSim = getPaletteComponentById(c.firebaseComponentId)?.simulation;
+          if (!c.parentId && c.label === newLabel && cSim?.controlledBy === 'label_match') {
+            return { ...c, parentId: newId };
+          }
+          return c;
+        });
+      }
+      return updated;
+    });
     setSelectedComponentForSidebar(newComponent);
     setSelectedConnectionId(null);
     setIsPropertiesSidebarOpen(true);
