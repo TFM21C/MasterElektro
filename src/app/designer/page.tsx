@@ -249,6 +249,8 @@ const DesignerPageContent: React.FC = () => {
                     onWaypointDoubleClick={()=>{}}
                     width={800} height={700}
                     isSimulating={isSimulating}
+                    isMeasuring={false}
+                    measurements={[]}
                     simulatedConnectionStates={simulatedConnectionStates}
                     simulatedComponentStates={simulatedComponentStates}
                     selectedConnectionId={selectedConnectionId}

@@ -11,6 +11,7 @@ interface DraggableComponentProps {
   onComponentClick: (id: string, isDoubleClick?: boolean) => void;
   connectingPin: { componentId: string; pinName: string } | null;
   isSimulating?: boolean;
+  isMeasuring?: boolean;
   simulatedState?: SimulatedComponentState;
 }
 
@@ -22,6 +23,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   onComponentClick,
   connectingPin,
   isSimulating,
+  isMeasuring,
   simulatedState,
 }) => {
   const definition = COMPONENT_DEFINITIONS[component.type];
@@ -58,7 +60,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
       onMouseUp={isSimulating ? undefined : handleComponentMouseUp}
       onClick={handleComponentClick}
       onDoubleClick={isSimulating ? undefined : handleComponentDoubleClick}
-      style={{ cursor: isSimulating ? 'pointer' : 'grab' }}
+      style={{ cursor: isMeasuring ? 'crosshair' : (isSimulating ? 'pointer' : 'grab') }}
       data-testid={`component-${component.id}`}
     >
       {/* The definition.render function draws the component at its base size.
@@ -92,7 +94,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
               const absolutePinY = component.y + pinDef.y * scale;
               onPinClick(component.id, pinName, { x: absolutePinX, y: absolutePinY });
             }}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: isMeasuring ? 'crosshair' : 'pointer' }}
             data-testid={`pin-${component.id}-${pinName}`}
           />
         );
