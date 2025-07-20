@@ -21,7 +21,7 @@ export interface ComponentDefinition {
     simulatedState?: SimulatedComponentState, // Added for simulation
     componentId?: string // Added for simulation, if needed by render
   ) => JSX.Element;
-  pins: Record<string, PinDefinition>;
+  pins?: Record<string, PinDefinition>;
   initialState?: ComponentState;
   initialDisplayPinLabels?: Record<string, string>;
 }

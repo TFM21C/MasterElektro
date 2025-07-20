@@ -8,7 +8,7 @@ interface DraggableComponentProps {
   onMouseDown: (e: React.MouseEvent<SVGGElement>, id: string) => void;
   onMouseUp: (id: string) => void;
   onPinClick: (componentId: string, pinName: string, pinCoords: Point) => void;
-  onComponentClick: (id: string, isDoubleClick?: boolean) => void;
+  onComponentClick: (id: string, isDoubleClick?: boolean, clickCoords?: Point) => void;
   connectingPin: { componentId: string; pinName: string } | null;
   isSimulating?: boolean;
   isMeasuring?: boolean;
@@ -38,8 +38,20 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   };
   
   const handleComponentClick = (e: React.MouseEvent<SVGGElement>) => {
-     if (!(e.target instanceof SVGElement && e.target.classList.contains('pin-circle'))) {
-      onComponentClick(component.id);
+    if (!(e.target instanceof SVGElement && e.target.classList.contains('pin-circle'))) {
+      const svg = (e.currentTarget as SVGGElement).ownerSVGElement;
+      let coords: Point | undefined;
+      if (svg) {
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          const pt = svg.createSVGPoint();
+          pt.x = e.clientX;
+          pt.y = e.clientY;
+          const local = pt.matrixTransform(ctm.inverse());
+          coords = { x: local.x, y: local.y };
+        }
+      }
+      onComponentClick(component.id, false, coords);
     }
   };
 
@@ -49,7 +61,19 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
 
   const handleComponentDoubleClick = (e: React.MouseEvent<SVGGElement>) => {
     if (!(e.target instanceof SVGElement && e.target.classList.contains('pin-circle'))) {
-      onComponentClick(component.id, true);
+      const svg = (e.currentTarget as SVGGElement).ownerSVGElement;
+      let coords: Point | undefined;
+      if (svg) {
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          const pt = svg.createSVGPoint();
+          pt.x = e.clientX;
+          pt.y = e.clientY;
+          const local = pt.matrixTransform(ctm.inverse());
+          coords = { x: local.x, y: local.y };
+        }
+      }
+      onComponentClick(component.id, true, coords);
     }
   };
 
@@ -92,7 +116,7 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
       
       {/* Pin circles are also drawn within this scaled group.
           Their cx/cy are relative to the unscaled component origin. */}
-      {Object.entries(definition.pins).map(([pinName, pinDef]) => {
+      {Object.entries(definition.pins || {}).map(([pinName, pinDef]) => {
         const isSelectedPin = connectingPin?.componentId === component.id && connectingPin?.pinName === pinName;
         return (
           <circle

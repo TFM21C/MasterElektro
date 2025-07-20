@@ -107,13 +107,16 @@ export const useCircuitState = () => {
         const component = components.find(c => c.id === componentId);
         if (!component) return null;
         const definition = COMPONENT_DEFINITIONS[component.type];
-        if (!definition || !definition.pins[pinName]) return null;
-        const pinDef = definition.pins[pinName];
+        if (!definition) return null;
         const scale = component.scale || 1;
-        return {
-          x: component.x + pinDef.x * scale,
-          y: component.y + pinDef.y * scale
-        };
+        if (definition.pins && definition.pins[pinName]) {
+            const pinDef = definition.pins[pinName];
+            return {
+                x: component.x + pinDef.x * scale,
+                y: component.y + pinDef.y * scale
+            };
+        }
+        return null;
     }, [components]);
 
     return {

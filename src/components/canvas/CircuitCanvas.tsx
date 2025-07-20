@@ -12,12 +12,12 @@ interface CircuitCanvasProps {
   onMouseDownComponent: (e: React.MouseEvent<SVGGElement>, id: string) => void;
   onMouseUpComponent: (id: string) => void; 
   onPinClick: (componentId: string, pinName: string, pinCoords: Point) => void;
-  onComponentClick: (id: string, isDoubleClick?: boolean) => void;
+  onComponentClick: (id: string, isDoubleClick?: boolean, clickCoords?: Point) => void;
   onConnectionClick: (connectionId: string, clickCoords: Point) => void;
   onWaypointMouseDown: (connectionId: string, waypointIndex: number) => void;
   onWaypointDoubleClick: (connectionId: string, waypointIndex: number) => void;
-  width: number;
-  height: number;
+  viewBoxWidth: number;
+  viewBoxHeight: number;
   isSimulating: boolean;
   isMeasuring: boolean;
   measurements: {id: number, x: number, y: number, value: string}[];
@@ -45,8 +45,8 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   onConnectionClick,
   onWaypointMouseDown,
   onWaypointDoubleClick,
-  width,
-  height,
+  viewBoxWidth,
+  viewBoxHeight,
   isSimulating,
   isMeasuring,
   measurements,
@@ -77,9 +77,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   return (
     <svg
       ref={svgRef}
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      width="100%"
+      height="100%"
+      viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
       className="border border-border bg-card rounded-lg shadow-inner flex-grow"
       data-testid="circuit-canvas"
       style={{ cursor: isMeasuring ? 'crosshair' : undefined }}
@@ -197,7 +197,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           x1={snapLines.x}
           y1={0}
           x2={snapLines.x}
-          y2={height}
+          y2={viewBoxHeight}
           stroke="hsl(var(--muted-foreground))"
           strokeDasharray="4 2"
         />
@@ -206,7 +206,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         <line
           x1={0}
           y1={snapLines.y}
-          x2={width}
+          x2={viewBoxWidth}
           y2={snapLines.y}
           stroke="hsl(var(--muted-foreground))"
           strokeDasharray="4 2"
