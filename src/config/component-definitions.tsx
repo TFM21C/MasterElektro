@@ -466,7 +466,6 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
     height: 30,
     render: (label) => (
       <>
-        <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
         <path d="M5 20 a10 10 0 0 1 20 0" className="line" />
         <line x1="12" y1="20" x2="12" y2="24" className="line" />
         <line x1="18" y1="20" x2="18" y2="24" className="line" />
@@ -617,10 +616,10 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
           ) : (
             <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
           )}
-          <circle cx="15" cy="45" r="14" className="symbol stroke-2" />
-          <circle cx="11" cy="43" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
-          <circle cx="19" cy="43" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
-          <circle cx="15" cy="48" r="2" stroke="hsl(var(--foreground))" strokeWidth="1.5" fill="none" />
+          <path d="M5 50 a10 10 0 0 1 20 0" className="line" />
+          <line x1="12" y1="50" x2="12" y2="54" className="line" />
+          <line x1="18" y1="50" x2="18" y2="54" className="line" />
+          <line x1="15" y1="52" x2="15" y2="56" className="line" />
           <text x="15" y="68" textAnchor="middle" className="component-text text-xs">{label}</text>
         </>
       );
