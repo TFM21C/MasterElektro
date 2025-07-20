@@ -34,6 +34,7 @@ interface CircuitCanvasProps {
   onDropComponent?: (component: PaletteComponentFirebaseData, position: Point) => void;
   selectionRect?: { x: number; y: number; width: number; height: number } | null;
   selectedComponentIds?: string[];
+  highlightedComponentIds?: string[];
 }
 
 const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
@@ -66,7 +67,8 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   onCanvasMouseDown,
   onDropComponent,
   selectionRect,
-  selectedComponentIds
+  selectedComponentIds,
+  highlightedComponentIds
 }) => {
 
   const viewData = projectType
@@ -168,6 +170,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           isMeasuring={isMeasuring}
           simulatedState={simulatedComponentStates[comp.id]}
           selected={selectedComponentIds?.includes(comp.id)}
+          highlighted={highlightedComponentIds?.includes(comp.id)}
         />
       ))}
 
