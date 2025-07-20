@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListChecks, Settings, BookOpen, LogIn, PlusCircle } from 'lucide-react';
+import { ListChecks, Settings, BookOpen, LogIn, PlusCircle, Rocket } from 'lucide-react';
+import { DEMO_PROJECTS } from '@/config/demo-projects';
 import NewProjectDialog from '@/components/modals/NewProjectDialog';
 
 export default function HomePage() {
@@ -15,6 +16,13 @@ export default function HomePage() {
 
   const handleCreate = (name: string, type: string) => {
     const url = `/new-project?projectName=${encodeURIComponent(name)}&projectType=${encodeURIComponent(type)}`;
+    router.push(url);
+  };
+
+  const handleLoadDemo = () => {
+    const demo = DEMO_PROJECTS[0];
+    if (!demo) return;
+    const url = `/new-project?projectName=${encodeURIComponent(demo.projectName)}&projectType=${encodeURIComponent(demo.projectType)}&components=${encodeURIComponent(JSON.stringify(demo.components))}&connections=${encodeURIComponent(JSON.stringify(demo.connections))}`;
     router.push(url);
   };
 
@@ -46,6 +54,19 @@ export default function HomePage() {
             </CardHeader>
             <CardContent className="flex-grow flex items-end">
                <Button className="w-full mt-auto" onClick={() => setIsDialogOpen(true)}>Projekt erstellen</Button>
+            </CardContent>
+          </Card>
+
+          <Card onClick={handleLoadDemo} className="hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center text-2xl">
+                <Rocket className="mr-3 h-8 w-8 text-primary" />
+                Demo-Projekt laden
+              </CardTitle>
+              <CardDescription>Lädt eine vorgefertigte Beispielschaltung.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow flex items-end">
+               <Button className="w-full mt-auto" onClick={handleLoadDemo}>Demo laden</Button>
             </CardContent>
           </Card>
 

@@ -101,6 +101,27 @@ const DesignerPageContent: React.FC = () => {
     });
   }, [projectType]);
 
+  useEffect(() => {
+    const compsParam = searchParams.get('components');
+    const connsParam = searchParams.get('connections');
+    if (compsParam) {
+      try {
+        const parsed = JSON.parse(compsParam);
+        setComponents(parsed);
+      } catch (e) {
+        console.error('Failed to parse components from URL', e);
+      }
+    }
+    if (connsParam) {
+      try {
+        const parsed = JSON.parse(connsParam);
+        setConnections(parsed);
+      } catch (e) {
+        console.error('Failed to parse connections from URL', e);
+      }
+    }
+  }, [searchParams]);
+
 
   const runSimulationStep = useCallback(() => {
     setSimulatedComponentStates(currentSimStates => {
