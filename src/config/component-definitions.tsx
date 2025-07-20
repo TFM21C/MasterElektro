@@ -1,5 +1,6 @@
 // Using .tsx because it contains JSX in render functions
 import type { ComponentDefinition, SimulatedComponentState } from '@/types/circuit';
+import AusschalterSvg from '@/components/svg/Ausschalter';
 
 export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
   '24V': {
@@ -294,30 +295,19 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
   },
 
   'Ausschalter': {
-    width: 30,
-    height: 30,
-    render: (label, _state, displayPinLabels = { 'L': 'L', 'Out': '' }, simulatedState) => {
-      const isClosed = simulatedState?.currentContactState?.L === 'closed';
-      return (
-        <>
-          <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
-          <circle cx="15" cy="4" r="2" className="line" fill="none" />
-          <line x1="15" y1="6" x2="15" y2="12" className="line" strokeWidth="1.5" />
-          <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
-          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
-          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
-          {isClosed ? (
-            <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
-          ) : (
-            <line x1="10" y1="12" x2="15" y2="18" className="line" strokeWidth="1.5" />
-          )}
-          <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
-        </>
-      );
-    },
+    width: 60,
+    height: 60,
+    render: (label, _state, displayPinLabels = { 'L': 'L', 'Out': 'Out' }) => (
+      <>
+        <AusschalterSvg />
+        <text x={30} y={70} textAnchor="middle" className="component-text text-xs">{label}</text>
+        <text x={30} y={-5} textAnchor="middle" className="text-pin">{displayPinLabels['L']}</text>
+        <text x={30} y={65} textAnchor="middle" className="text-pin">{displayPinLabels['Out']}</text>
+      </>
+    ),
     pins: {
-      'L': { x: 15, y: 1, label: 'L' },
-      'Out': { x: 15, y: 29, label: 'Out' }
+      'L': { x: 30, y: 0, label: 'L' },
+      'Out': { x: 30, y: 60, label: 'Out' }
     }
   },
   'LampeInstallation': {
