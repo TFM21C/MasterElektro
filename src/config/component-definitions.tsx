@@ -276,6 +276,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
           <rect x="1" y="1" width="28" height="28" className="symbol stroke-2" fill="none" />
           <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
           <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           {isClosed ? (
             <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
           ) : (
@@ -302,6 +304,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
           <circle cx="15" cy="4" r="2" className="line" fill="none" />
           <line x1="15" y1="6" x2="15" y2="12" className="line" strokeWidth="1.5" />
           <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           {isClosed ? (
             <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
           ) : (
@@ -493,6 +497,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
           <line x1="15" y1="5" x2="15" y2="15" className="line" strokeWidth="1.5" />
           <line x1="8" y1="22" x2="8" y2="25" className="line" strokeWidth="1.5" />
           <line x1="22" y1="22" x2="22" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           <line x1="15" y1="15" x2={inactiveX} y2="22" className="line" strokeWidth="1.5" />
           <line x1="15" y1="15" x2={wiperX} y2="22" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
           <text x="15" y="38" textAnchor="middle" className="component-text text-xs">{label}</text>
@@ -541,6 +547,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       return (
         <>
           <rect x="1" y="1" width="38" height="28" className="symbol stroke-2" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           <line x1="12" y1="5" x2="12" y2="25" className="line" />
           <line x1="12" y1="10" x2="16" y2="10" className="line" strokeWidth="1.5" />
           <line x1="24" y1="10" x2="28" y2="10" className="line" strokeWidth="1.5" />
@@ -575,6 +583,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
       return (
         <>
           <rect x="1" y="1" width="38" height="28" className="symbol stroke-2" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           {isCross ? (
             <>
               <line x1="5" y1="10" x2="35" y2="20" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
@@ -612,6 +622,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
           <rect x="1" y="1" width="28" height="58" className="symbol stroke-2" />
           <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
           <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           {isClosed ? (
             <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
           ) : (
@@ -645,6 +657,8 @@ export const COMPONENT_DEFINITIONS: Record<string, ComponentDefinition> = {
           <rect x="1" y="1" width="28" height="38" className="symbol stroke-2" />
           <line x1="15" y1="5" x2="15" y2="12" className="line" strokeWidth="1.5" />
           <line x1="15" y1="18" x2="15" y2="25" className="line" strokeWidth="1.5" />
+          <line x1="5" y1="3" x2="10" y2="8" className="line" strokeWidth="1.5" />
+          <line x1="7" y1="3" x2="5" y2="5" className="line" strokeWidth="1.5" />
           {isPressed ? (
             <line x1="15" y1="12" x2="15" y2="18" className="line stroke-[hsl(var(--destructive))]" strokeWidth="1.5" />
           ) : (
