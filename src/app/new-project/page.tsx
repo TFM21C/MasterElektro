@@ -110,12 +110,14 @@ const DesignerPageContent: React.FC = () => {
       components.forEach(comp => {
         const paletteComp = getPaletteComponentById(comp.firebaseComponentId);
         if (paletteComp?.simulation?.controlledBy === 'label_match') {
-          const controllingCoils = components.filter(c =>
-            c.label === comp.label &&
-            getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
-          );
-
-          const isEnergized = controllingCoils.some(coil => newSimCompStates[coil.id]?.isEnergized);
+          let isEnergized = false;
+          if (comp.parentId) {
+            const parent = components.find(c => c.id === comp.parentId);
+            const parentPalette = parent ? getPaletteComponentById(parent.firebaseComponentId) : null;
+            if (parent && parentPalette?.simulation?.affectingLabel) {
+              isEnergized = !!newSimCompStates[parent.id]?.isEnergized;
+            }
+          }
 
           const targetState = isEnergized
             ? paletteComp.simulation.outputPinStateOnEnergized
@@ -826,24 +828,11 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       }
     }
 
-    const simConfig = paletteItem.simulation;
-
-    let parentId: string | null = null;
-    if (simConfig?.controlledBy === 'label_match') {
-      const parent = components.find(c =>
-        c.label === newLabel &&
-        getPaletteComponentById(c.firebaseComponentId)?.simulation?.affectingLabel
-      );
-      if (parent) {
-        parentId = parent.id;
-      }
-    }
-
     const newComponent: ElectricalComponent = {
       id: newId,
       type: paletteItem.type,
       firebaseComponentId: paletteItem.id,
-      parentId,
+      parentId: null,
       x: initX,
       y: initY,
       label: newLabel,
@@ -854,19 +843,7 @@ const handleMouseDownComponent = (e: React.MouseEvent<SVGGElement>, id: string) 
       height: null,
     };
 
-    setComponents(prev => {
-      let updated = [...prev, newComponent];
-      if (simConfig?.affectingLabel) {
-        updated = updated.map(c => {
-          const cSim = getPaletteComponentById(c.firebaseComponentId)?.simulation;
-          if (!c.parentId && c.label === newLabel && cSim?.controlledBy === 'label_match') {
-            return { ...c, parentId: newId };
-          }
-          return c;
-        });
-      }
-      return updated;
-    });
+    setComponents(prev => [...prev, newComponent]);
     setSelectedComponentForSidebar(newComponent);
     setSelectedConnectionId(null);
     setIsPropertiesSidebarOpen(true);
